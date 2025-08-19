@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alcuin of York - Letters Network Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .node {
+            cursor: pointer;
+        }
+        .node:hover {
+            stroke-width: 3px;
+        }
+        .tooltip {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.95);
+            color: #f8fafc;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            pointer-events: none;
+            max-width: 400px;
+            font-size: 12px;
+            line-height: 1.4;
+            z-index: 1000;
+        }
+        .bio-btn {
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .node-group:hover .bio-btn {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100">
+    <div class="container mx-auto px-4 py-6">
+        <header class="text-center mb-6">
+            <h1 class="text-4xl font-bold text-slate-100 mb-2">Alcuin of York</h1>
+            <h2 class="text-xl text-slate-300 mb-3">Letters Network Visualization (c. 787-804 CE)</h2>
+            <p class="text-sm text-slate-400 max-w-3xl mx-auto">
+                Explore the correspondence network of Alcuin of York. 
+                <strong>Hover</strong> over nodes, <strong>click "i" buttons</strong> for biographies, 
+                <strong>drag</strong> nodes to rearrange.
+            </p>
+        </header>
+        
+        <!-- Legend & Controls -->
+        <div class="fixed top-6 right-6 bg-slate-800 p-4 rounded-lg border border-slate-600 z-50">
+            <h3 class="text-sm font-semibold mb-3 text-slate-200">Letter Categories</h3>
+            <div class="space-y-2 text-xs mb-4">
+                <div class="flex items-center">
+                    <div class="w-4 h-1 bg-blue-400 mr-2"></div>
+                    <span>Personal</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-1 bg-green-400 mr-2"></div>
+                    <span>Ecclesiastical</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-1 bg-yellow-400 mr-2"></div>
+                    <span>Courtly</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-1 bg-red-400 mr-2"></div>
+                    <span>Political</span>
+                </div>
+            </div>
+            
+            <!-- Node Types -->
+            <div class="border-t border-slate-600 pt-3 mb-4">
+                <h4 class="text-xs font-semibold mb-2 text-slate-200">Node Types</h4>
+                <div class="space-y-1 text-xs">
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-yellow-400 mr-2"></div>
+                        <span>Alcuin (Central)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 rounded-full bg-blue-400 mr-2"></div>
+                        <span>Recipients</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 rounded-full bg-slate-400 mr-3"></div>
+                        <span>Mentioned Persons</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Temporal Filter -->
+            <div class="border-t border-slate-600 pt-3">
+                <div class="flex items-center mb-3">
+                    <input type="checkbox" id="temporal-filter" class="mr-2">
+                    <label for="temporal-filter" class="text-xs text-slate-200 cursor-pointer">
+                        Temporal Filter
+                    </label>
+                </div>
+                
+                <div id="temporal-controls" class="hidden">
+                    <div class="text-xs text-slate-300 mb-2">
+                        Years: <span id="year-range-display">790-793 CE</span>
+                    </div>
+                    <input type="range" 
+                           id="year-slider" 
+                           min="790" 
+                           max="802" 
+                           value="790" 
+                           step="1"
+                           class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer mb-2">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>790</span>
+                        <span>802</span>
+                    </div>
+                    <div class="text-xs text-slate-400 mt-1">
+                        Window: <span id="window-size">4</span> years
+                    </div>
+                    <input type="range" 
+                           id="window-slider" 
+                           min="2" 
+                           max="8" 
+                           value="4" 
+                           step="1"
+                           class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer mt-1">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Visualization -->
+        <div id="network-container" class="w-full bg-slate-900 rounded-lg border border-slate-700" style="height: 70vh;"></div>
+        
+        <!-- Biography Modal -->
+        <div id="bio-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div class="flex items-center justify-center h-full p-4">
+                <div class="bg-slate-800 p-6 rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto border border-slate-600">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 id="bio-title" class="text-xl font-bold text-slate-100"></h3>
+                        <button onclick="closeBioModal()" class="text-slate-400 hover:text-slate-200">×</button>
+                    </div>
+                    <div id="bio-content" class="text-slate-300 text-sm leading-relaxed"></div>
+                    <div id="bio-source" class="text-xs text-slate-400 mt-4 italic"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tooltip -->
+        <div id="tooltip" class="tooltip hidden"></div>
+    </div>
+
+    <script>
+        // Expanded Alcuin letters dataset with more letters from the corpus
+        const ALL_ALCUIN_LETTERS = [
+{
+    number: "II",
+    recipient: "Arno of Salzburg",
+    year: 790,
+    header: "EPISTOLA II. AD ARNONEM. (",
+    content: "Anno 790.) Illum praesentem habere desiderat; hortatur ad solertem curam animarum suo regimini commissarum; Laidradum salutari cupit; se vero ob regni novitatem adhuc in patria (Anglia) retineri signi...",
+    category: "Ecclesiastical",
+    mentions: ["Laidrad"]
+},
+{
+    number: "III",
+    recipient: "Colcu of Scotland",
+    year: 790,
+    header: "EPISTOLA III. AD COLCUM LECTOREM IN SCOTIA (Anno 790.) Varia enarrat quae in itinere suo vel vidit, vel audivit.",
+    content: "Benedicto magistro et Pio Patri Colcu. Hunc Usserius vocat lectorem in Scotia, forte in monasterio Hiiensi, ait Mabillon...",
+    category: "Personal",
+    mentions: ["Usserius", "Mabillon"]
+},
+{
+    number: "IV",
+    recipient: "Felix of Urgell",
+    year: 792,
+    header: "EPISTOLA IV. AD FELICEM EPISCOPUM. (",
+    content: "Ante annum 792.) Felicis Urgellitani episcopi, ut videtur, a pietate sibi laudati, orationibus se commendat. Felix Hildebaldus Coloniensis...",
+    category: "Ecclesiastical",
+    mentions: ["Felix Hildebaldus"]
+},
+{
+    number: "V",
+    recipient: "Cudrad",
+    year: 793,
+    header: "EPISTOLA V. AD CUDRADUM PRESBYTERUM. (",
+    content: "Anno 793 vel seq.) Cudradum presbyterum post sanctorum locorum vastationem hortatur ad constantiam. Ecclesiae nimirum S. Cudberti Lindisfarnensis...",
+    category: "Ecclesiastical",
+    mentions: ["Saint Cuthbert"]
+},
+{
+    number: "VI",
+    recipient: "York Clergy",
+    year: 793,
+    header: "EPISTOLA VI. AD FRATRES EBORACENSIS ECCLESIAE. (",
+    content: "Circa annum 793.) Se ab Eboracensibus ab infantia usque ad virilem aetatem educatum grato animo profitetur. Illorum omnium orationibus se commendat...",
+    category: "Personal",
+    mentions: []
+},
+{
+    number: "VII",
+    recipient: "York Clergy",
+    year: 793,
+    header: "EPISTOLA VII. AD FRATRES EBORACENSES. (",
+    content: "Anno 793.) Significat laetitiam epistola ab ipsis accepta; hortatur ad sectanda Patrum suorum vestigia; ac se illorum orationibus commendat...",
+    category: "Personal",
+    mentions: []
+},
+{
+    number: "VIII",
+    recipient: "Beornuin",
+    year: 793,
+    header: "EPISTOLA VIII. AD BEORNUINUM PRESBYTERUM. (",
+    content: "Anno 793.) Ab Offae regis et gentis Anglorum fidelitate se nunquam recessisse profitetur; monet ut et regibus, et episcopis, et principibus Dei voluntatem sequi suadeat...",
+    category: "Political",
+    mentions: ["King Offa"]
+},
+{
+    number: "IX",
+    recipient: "Lindisfarne Community",
+    year: 793,
+    header: "EPISTOLA IX. AD LINDISFARNENSES. (",
+    content: "Anno 793.) Deplorat Lindisfarnensis ecclesiae vastationem, monet ad orandum; hortatur ad mores corrigendos, ad disciplinam regularem; suadet mente non consternari. Beatissimi Patris sancti scilicet Cudberti...",
+    category: "Ecclesiastical",
+    mentions: ["Saint Cuthbert"]
+},
+{
+    number: "X",
+    recipient: "Aethelhard",
+    year: 791,
+    header: "EPISTOLA X. AD AETHILHARDUM. (",
+    content: "Fuit archiepiscopus Dorovernensis, electus anno 791, teste Simeone Dunelmensi. Exstat ejus mentio in Ingulfi Historia et epistolis Kenulfi regis Merciorum ad Leonem III pontificem...",
+    category: "Ecclesiastical",
+    mentions: ["Simeon of Durham", "Ingulf", "King Coenwulf", "Pope Leo III"]
+},
+{
+    number: "XI",
+    recipient: "King Æthelred of Northumbria",
+    year: 793,
+    header: "EPISTOLA XI. AD AEDILREDUM REGEM ET PRINCIPES POPULUMQUE NORDANHUMBRORUM GENTIS. (",
+    content: "Circa annum 793.) Hortatur ut grati sint Deo, ut coelestia potius desiderent quam terrena, ut divitias per injustitiam non appetant...",
+    category: "Political",
+    mentions: []
+},
+{
+    number: "XII",
+    recipient: "King Æthelred of Northumbria",
+    year: 794,
+    header: "EPISTOLA XII. AD AEDILREDUM REGEM. (",
+    content: "Anno incerto.) Hortatur ad regias virtutes. Domino dilectissimo Aedilredo regi Alcuinus diaconus salutem...",
+    category: "Political",
+    mentions: []
+},
+{
+    number: "XIV",
+    recipient: "Wearmouth-Jarrow Community",
+    year: 793,
+    header: "EPISTOLA XIV. AD FRATRES Wirensis et Gyrvensis.",
+    content: "Wirense seu Wiremuthense monasterium sancti Petri; et Girwense sancti Pauli (Jarrow) in Anglia ad ostium Wirae amnis, cujus utrasque ripas Benedictus quidam ecclesiis insignivit...",
+    category: "Ecclesiastical",
+    mentions: ["Saint Peter", "Saint Paul", "Benedict Biscop"]
+},
+{
+    number: "XV",
+    recipient: "Jarrow Community",
+    year: 793,
+    header: "EPISTOLA XV. AD FRATRES GYROENSIS ECCLESIAE.",
+    content: "Hortatur illos ad virtutes monachis dignas, et ad sectanda patrum ac magistrorum suorum vestigia...",
+    category: "Ecclesiastical",
+    mentions: []
+},
+{
+    number: "XVI",
+    recipient: "St. Peter's Community",
+    year: 793,
+    header: "EPISTOLA XVI. AD FRATRES ECCLESIAE SANCTI PETRI.",
+    content: "Commendat se illorum amicitiae olim condictae: laudat eorum regularem conversationem. Hortatur ad virtutes monachis proprias...",
+    category: "Ecclesiastical",
+    mentions: ["Saint Peter"]
+},
+{
+    number: "XVII",
+    recipient: "Charlemagne",
+    year: 794,
+    header: "EPISTOLA XVII. AD CAROLUM MAGNUM. (",
+    content: "Circa annum 794.) Laudat illum a potentia saeculari et praedicatione divinae legis, tanquam rectorem populi et doctorem. Carpit errorem Adoptianorum. Veniente ad nos filio nostro Candido...",
+    category: "Political",
+    mentions: ["Candidus", "Adoptianists"]
+},
+{
+    number: "XVIII",
+    recipient: "Pope Adrian I",
+    year: 794,
+    header: "EPISTOLA XVIII. AD ADRIANUM I PAPAM. (",
+    content: "Anno 794.) Commendat se gratiae pontificis, illumque profitetur vicarium sancti Petri, et ejus potestatis haeredem, simulque precatur, ut petitionibus suis per Angilbertum faciendis annuat...",
+    category: "Ecclesiastical",
+    mentions: ["Saint Peter", "Angilbert"]
+},
+{
+    number: "XIX",
+    recipient: "Theophilus",
+    year: 794,
+    header: "EPISTOLA XIX. AD THEOPHILUM. (",
+    content: "Anno 794.) Laudat illius scripta apostolicae fidei, et ab eodem instrui cupit. Theophylacto fortassis, episcopo Tudertino, qui anno 794 Francofortensi concilio praesedit...",
+    category: "Ecclesiastical",
+    mentions: ["Theophylact", "Frankfurt Council"]
+},
+{
+    number: "XX",
+    recipient: "Usuald",
+    year: 794,
+    header: "EPISTOLA XX. AD USUALDUM. (",
+    content: "Anno 794.) Monachos hortatur ad virtutes; illorum petitiones apud regem se juvisse dicit; illorum se orationibus commendat...",
+    category: "Ecclesiastical",
+    mentions: []
+},
+{
+    number: "XXI",
+    recipient: "York Associates",
+    year: 794,
+    header: "EPISTOLA XXI. AD QUOSDAM. (",
+    content: "Circa annum 794.) Apud Eboracenses Alcuinus suam excusat absentiam, eosdem hortatur ad concordiam cum Eanbaldo patre suo...",
+    category: "Personal",
+    mentions: ["Eanbald"]
+},
+{
+    number: "XXII",
+    recipient: "A Disciple",
+    year: 795,
+    header: "EPISTOLA XXII. AD QUEMDAM.",
+    content: "Filium et peregrinationis socium ad virtutes stimulat. Memorat et commendat sapientiae studium; doctrinas olim datas in memoriam revocat...",
+    category: "Personal",
+    mentions: []
+},
+{
+    number: "XXIII",
+    recipient: "Tours Community",
+    year: 795,
+    header: "EPISTOLA XXIII. AD FRATRES SANCTI MARTINI TURONICAE CIVITATIS. (",
+    content: "Circa annum 795.) Cum illis esse cupit, eosque hortatur ad virtutes monachis convenientes. beato Martino confessori Christi servientibus...",
+    category: "Ecclesiastical",
+    mentions: ["Saint Martin"]
+},
+{
+    number: "XXIV",
+    recipient: "Pope Leo III",
+    year: 796,
+    header: "EPISTOLA XXIV. AD LEONEM III PAPAM. (",
+    content: "Anno 796.) Commendat se summi pontificis, tanquam vicarii apostolorum et Ecclesiae principis, apostolicae sollicitudini per Angilbertum...",
+    category: "Ecclesiastical",
+    mentions: ["Angilbert"]
+},
+{
+    number: "XXV",
+    recipient: "Angilbert",
+    year: 796,
+    header: "EPISTOLA XXV. AD DULCISSIMUM FILIUM HOMERUM (ANGELBERTUM). (",
+    content: "Anno 796.) Commendat sui memoriam ad patrocinia sanctorum, et, ut res ecclesiasticae pulchritudinis sibi afferat, monet. Te abeunte tentavi saepius ad portum...",
+    category: "Courtly",
+    mentions: []
+},
+{
+    number: "XXVI",
+    recipient: "Angilbert",
+    year: 792,
+    header: "EPISTOLA XXVI. AD ANGELBERTUM PRIMICERIUM PALATII PIPPINI REGIS.",
+    content: "Ad sacra apostolorum limina peregrinantem commendat Angilberti favoribus, et sacras sibi reliquias mitti postulat. Is adscititio nomine dictus Homer, filius Pippini regis...",
+    category: "Courtly",
+    mentions: ["King Pippin", "Apostles"]
+},
+{
+    number: "XXVII",
+    recipient: "Angilbert",
+    year: 795,
+    header: "EPISTOLA XXVII. AD HOMERUM (ANGILBERTUM). (",
+    content: "Anno incerto.) Mittit solutionem binam quaestionum grammaticalium a rege sibi propositarum. Flaccus Albinus Flavio Homero optat salutem. septiplicis sapientiae...",
+    category: "Courtly",
+    mentions: ["Flaccus", "Albinus", "Flavius"]
+},
+{
+    number: "XXVIII",
+    recipient: "Angilbert",
+    year: 796,
+    header: "EPISTOLA XXVIII. AD HOMERUM FILIUM.",
+    content: "Homero Albinus matricularius salutem. Per Dei gratiam et vestram dilectionem bene valemus...",
+    category: "Courtly",
+    mentions: ["Albinus"]
+},
+{
+    number: "XXIX",
+    recipient: "Paulinus of Aquileia",
+    year: 796,
+    header: "EPISTOLA XXIX. AD PAULINUM PATRIARCHAM. (",
+    content: "Anno 796.) Semet constanti memoriae, bajulum vero litterarum ejus patrocinio commendat. Cujus vitam, gesta et scripta, vir multa eruditione praeditus D. Joan. Franc. Madrisius...",
+    category: "Ecclesiastical",
+    mentions: ["Joan Franc. Madrisius"]
+},
+{
+    number: "XXX",
+    recipient: "Paulinus of Aquileia",
+    year: 796,
+    header: "EPISTOLA XXX. AD PAULINUM. (",
+    content: "Anno 796?) Desiderium suum cum Paulino colloquendi significat. Tres indiculos ad eum mittit; et doni a Liutgarde missi facit memoriam. Domino Patri Paulino Albinus salutem...",
+    category: "Ecclesiastical",
+    mentions: ["Liutgard", "Albinus"]
+},
+{
+    number: "XXXI",
+    recipient: "Agin",
+    year: 796,
+    header: "EPISTOLA XXXI. AD AGINUM EPISCOPUM. (",
+    content: "Anno 796.) Petit sibi mitti per Angilbertum reliquias sanctorum, olim promissas. Suspicor, ait Canisius, hanc epistolam scriptam esse ad Aginensem episcopum...",
+    category: "Ecclesiastical",
+    mentions: ["Angilbert", "Canisius"]
+},
+{
+    number: "XXXII",
+    recipient: "Itherius",
+    year: 796,
+    header: "EPISTOLA XXXII. AD ITHERIUM. (",
+    content: "Anno 796.) Consolatur infirmum, et ut se ad aeternitatem praeparet, amice suadet. Monasterii Turonensis abbati, quem hac epistola in extremo agone consolatur...",
+    category: "Ecclesiastical",
+    mentions: []
+},
+{
+    number: "XXXIII",
+    recipient: "Charlemagne",
+    year: 796,
+    header: "EPISTOLA XXXIII. AD DOMNUM REGEM. (",
+    content: "Anno 796.) Gratulatur de subjectione Hunnorum, et qualiter docendi sint in fide, et, quis ordo sit servandus, ostendit. Domino excellentissimo et in omni Christi honore devotissimo Carolo regi...",
+    category: "Political",
+    mentions: ["Huns"]
+},
+{
+    number: "XXXIV",
+    recipient: "Arno of Salzburg",
+    year: 796,
+    header: "EPISTOLA XXXIV. AD ARNONEM. (",
+    content: "Anno 796. Illius reditum exoptat, et de variis eventibus instrui cupit. Mense Julio se ad Palatium iturum significat. Hortatur ut ab errore Hispanorum caveat...",
+    category: "Ecclesiastical",
+    mentions: ["Spaniards", "Palace"]
+},
+{
+    number: "XXXV",
+    recipient: "Arno of Salzburg",
+    year: 796,
+    header: "EPISTOLA XXXV. AD ARNONEM. (",
+    content: "Anno 796.) Eidem significat se illius epistolam accepisse. Archanbaldi (Eanbaldi) animam precibus ejus commendat. Mittit epistolam ad regem, scriptam de praedicatione apud paganos...",
+    category: "Ecclesiastical",
+    mentions: ["Eanbald"]
+},
+{
+    number: "XXXVI",
+    recipient: "Arno of Salzburg",
+    year: 796,
+    header: "EPISTOLA XXXVI. AD ARNONEM. (",
+    content: "Anno 796.) Instruit de praedicatione fidei apud Avaros nuper conversos. Dulcissimo fratri et sanctissimo praesuli Aquilae Albinus salutem. Praesagum tibi nomen imposuere parentes...",
+    category: "Ecclesiastical",
+    mentions: ["Avars", "Albinus"]
+},
+{
+    number: "XXXVII",
+    recipient: "Charlemagne",
+    year: 796,
+    header: "EPISTOLA XXXVII. AD DOMNUM REGEM. (",
+    content: "Anno 796.) Pro captivis in bello Hunnico, et pro hostibus deprecatur. Domine mi dilectissime, et dulcissime, et omnium desiderantissime mi David! Tristis est Flaccus vester propter infirmitatem vestram...",
+    category: "Political",
+    mentions: ["David", "Flaccus", "Huns"]
+},
+{
+    number: "XXXVIII",
+    recipient: "Pippin",
+    year: 796,
+    header: "EPISTOLA XXXVIII. AD PIPPINUM. (",
+    content: "Anno 796.) Optima suggerit vitae agendae documenta. Pippinus, antea Carolomannus dictus, Caroli Magni et Hildegardis filius...",
+    category: "Courtly",
+    mentions: ["Caroloman", "Charlemagne", "Hildegard"]
+},
+{
+    number: "XLIII",
+    recipient: "Charlemagne",
+    year: 796,
+    header: "EPISTOLA XLIII. AD CAROLUM MAGNUM. (",
+    content: "Anno 796.) Significat suum gaudium ob prosperitatem regis. Ad studia sua provehenda petit ex Anglia libros suos afferri. Utilitates studii litterarii recenset...",
+    category: "Political",
+    mentions: ["England"]
+},
+{
+    number: "XLVII",
+    recipient: "King Offa of Mercia",
+    year: 796,
+    header: "EPISTOLA XLVII. AD OFFAM REGEM MERCIORUM. (",
+    content: "Anno 796.) Nuntiat Carolum genti Northanumbrorum iratum ob necem regis Ethelredi. Sciat veneranda dilectio vestra quod domnus rex Carolus amabiliter et fideliter saepe locutus...",
+    category: "Political",
+    mentions: ["Charlemagne", "Northumbrians", "King Æthelred"]
+},
+{
+    number: "LVI",
+    recipient: "Eanbald",
+    year: 796,
+    header: "EPISTOLA LVI. AD EANBALDUM EPISCOPUM. (",
+    content: "Anno 796, circa mensem Augustum.) Gratulatur adeptam dignitatem; hortatur ad curam pastoralem, et bene omnia ordinanda; se vero memoriae et orationibus commendat...",
+    category: "Ecclesiastical",
+    mentions: []
+},
+{
+    number: "LX",
+    recipient: "King Eardwulf",
+    year: 796,
+    header: "EPISTOLA LX. AD AERDUULFUM REGEM. (",
+    content: "Anno 796.) Hortatur regem ad solium evectum, ut et suam et populi salutem procuret. Exemplo antecessorum illum terret. Hunc scriptores veteres, primis duabus litteris commutatis...",
+    category: "Political",
+    mentions: []
+},
+{
+    number: "LXI",
+    recipient: "Osbald",
+    year: 796,
+    header: "EPISTOLA LXI. AD OSBALDUM. (",
+    content: "Anno 796.) Osbaldum, quem suspectum habet ob regicidium et turbas populi, hortatur, ut vitam mutet, et suae ac gentis saluti consulat. Hunc Alcuinus patritium vocat...",
+    category: "Political",
+    mentions: []
+},
+{
+    number: "LXII",
+    recipient: "An Archbishop",
+    year: 796,
+    header: "EPISTOLA LXII. AD QUEMDAM ARCHIEPISCOPUM. (",
+    content: "Anno 796.) Nuntiat sese, depositis saeculi occupationibus, praeparare ad occursum Domini. Sanctissimo patri archiepiscopo, humilis filius Alcuinus salutem...",
+    category: "Ecclesiastical",
+    mentions: []
+},
+{
+    number: "LXIII",
+    recipient: "King Coenwulf of Mercia",
+    year: 796,
+    header: "EPISTOLA LXIII. AD COENULVUM REGEM MERCIORUM. (",
+    content: "Anno 796.) Ad regnum evectum hortatur ad regias virtutes. Excellentissimo viro Coenulvo. Aliis Kenulfus nominatur, qui post obitum Egfridi diadema regni Merciorum suscepit anno 796...",
+    category: "Political",
+    mentions: ["Egfrid"]
+},
+{
+    number: "LXIV",
+    recipient: "Hygbald",
+    year: 797,
+    header: "EPISTOLA LXIV. AD HYGBALDUM ABBATEM. (",
+    content: "Anno 797.) Gratulatur de suscepto abbatiae honore; hortatur ad virtutes abbati convenientes. Hygbaldus fuit abbas Lindisfarnensis...",
+    category: "Ecclesiastical",
+    mentions: ["Lindisfarne"]
+},
+{
+    number: "LXVII",
+    recipient: "Riculf",
+    year: 798,
+    header: "EPISTOLA LXVII. AD RICULFUM ARCHIEPISCOPUM. (",
+    content: "Anno 798.) Hortatur ad pastoralem curam, et ad concordiam cum suffraganeis. Riculfus fuit archiepiscopus Moguntiacensis...",
+    category: "Ecclesiastical",
+    mentions: ["Mainz"]
+},
+{
+    number: "LXXII",
+    recipient: "Charlemagne",
+    year: 799,
+    header: "EPISTOLA LXXII. AD CAROLUM MAGNUM. (",
+    content: "Anno 799.) De controversiis Leonis III Papae cum Romanis; suadet ut rex ad urbem veniat, et causas dijudicet. Gloriosissimo et excellentissimo regi David Albinus humilis levita salutem...",
+    category: "Political",
+    mentions: ["Pope Leo III", "Romans", "David", "Albinus"]
+},
+{
+    number: "LXXIX",
+    recipient: "Charlemagne",
+    year: 800,
+    header: "EPISTOLA LXXIX. AD CAROLUM MAGNUM. (",
+    content: "Anno 800.) Gratulatur coronationis dignitate; hortatur ut Ecclesiasticorum controversias componat. Gloriosissimo et excellentissimo imperatori David Albinus salutem...",
+    category: "Political",
+    mentions: ["David", "Albinus"]
+},
+{
+    number: "LXXX",
+    recipient: "Charlemagne",
+    year: 801,
+    header: "EPISTOLA LXXX. AD CAROLUM IMPERATOREM. (",
+    content: "Anno 801.) De ordinatione clericorum et observantia canonum. Gloriosissimo imperatori David filius vester Flaccus salutem...",
+    category: "Political",
+    mentions: ["David", "Flaccus"]
+},
+{
+    number: "LXXXI",
+    recipient: "Charlemagne",
+    year: 802,
+    header: "EPISTOLA LXXXI. AD CAROLUM IMPERATOREM. (",
+    content: "Anno 802.) De libris mittendis et studiorum utilitate. Domino excellentissimo David imperatori Flaccus humilis diaconus salutem...",
+    category: "Political",
+    mentions: ["David", "Flaccus"]
+}
+];
+        
+        // Add categorization logic for letters that don't have explicit categories
+        function categorizeLetters() {
+            ALL_ALCUIN_LETTERS.forEach(letter => {
+                if (!letter.category) {
+                    const recipient = letter.recipient.toLowerCase();
+                    const content = letter.content.toLowerCase();
+                    
+                    if (recipient.includes('pope') || recipient.includes('bishop') || recipient.includes('archbishop') || 
+                        recipient.includes('clergy') || recipient.includes('ecclesia') || content.includes('ecclesia')) {
+                        letter.category = 'Ecclesiastical';
+                    } else if (recipient.includes('king') || recipient.includes('rex') || recipient.includes('charlemagne') || 
+                              content.includes('regis') || content.includes('rex')) {
+                        letter.category = 'Political';
+                    } else if (recipient.includes('angilbert') || recipient.includes('homer') || content.includes('palatii')) {
+                        letter.category = 'Courtly';
+                    } else {
+                        letter.category = 'Personal';
+                    }
+                }
+            });
+        }
+        
+        // Initialize categories
+        categorizeLetters();
+        
+        // Color mapping
+        const categoryColors = {
+            'Personal': '#60a5fa',
+            'Ecclesiastical': '#4ade80',
+            'Courtly': '#fbbf24',
+            'Political': '#f87171'
+        };
+        
+        // Create network data with secondary connections for mentioned persons
+        function createNetworkData(lettersToUse = ALL_ALCUIN_LETTERS) {
+            const nodes = new Map();
+            const links = [];
+            
+            // Add Alcuin as central node
+            nodes.set('Alcuin of York', {
+                id: 'Alcuin of York',
+                name: 'Alcuin of York',
+                type: 'central',
+                citations: [],
+                degree: 0
+            });
+            
+            lettersToUse.forEach(letter => {
+                // Add recipient node if not exists
+                if (!nodes.has(letter.recipient)) {
+                    nodes.set(letter.recipient, {
+                        id: letter.recipient,
+                        name: letter.recipient,
+                        type: 'recipient',
+                        citations: [],
+                        degree: 0
+                    });
+                }
+                
+                // Add citation for recipient
+                nodes.get(letter.recipient).citations.push({
+                    letterNumber: letter.number,
+                    year: letter.year,
+                    citation: `Letter ${letter.number} (${letter.year || 'c. 790s'}): "${letter.content.substring(0, 100)}..."`
+                });
+                
+                // Add primary link from Alcuin to recipient
+                links.push({
+                    source: 'Alcuin of York',
+                    target: letter.recipient,
+                    category: letter.category,
+                    letter: letter,
+                    type: 'primary'
+                });
+                
+                // Add mentioned persons as secondary nodes
+                if (letter.mentions && letter.mentions.length > 0) {
+                    letter.mentions.forEach(mention => {
+                        if (!nodes.has(mention)) {
+                            nodes.set(mention, {
+                                id: mention,
+                                name: mention,
+                                type: 'mentioned',
+                                citations: [],
+                                degree: 0
+                            });
+                        }
+                        
+                        // Add citation for mentioned person
+                        nodes.get(mention).citations.push({
+                            letterNumber: letter.number,
+                            year: letter.year,
+                            citation: `Mentioned in Letter ${letter.number} (${letter.year || 'c. 790s'}) to ${letter.recipient}`
+                        });
+                        
+                        // Add secondary link from recipient to mentioned person
+                        links.push({
+                            source: letter.recipient,
+                            target: mention,
+                            category: letter.category,
+                            letter: letter,
+                            type: 'secondary'
+                        });
+                    });
+                }
+            });
+            
+            // Calculate degrees
+            links.forEach(link => {
+                nodes.get(link.source).degree++;
+                nodes.get(link.target).degree++;
+            });
+            
+            const nodeArray = Array.from(nodes.values());
+            console.log('Created enhanced network:', {
+                nodes: nodeArray.length, 
+                links: links.length,
+                primary: links.filter(l => l.type === 'primary').length,
+                secondary: links.filter(l => l.type === 'secondary').length
+            });
+            return {nodes: nodeArray, links};
+        }
+        
+        // Create visualization
+        function createVisualization(data = null) {
+            if (!data) {
+                data = createNetworkData();
+            }
+            
+            const container = d3.select("#network-container");
+            const rect = container.node().getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            
+            // Clear container
+            container.selectAll("*").remove();
+            
+            // Create SVG
+            const svg = container.append("svg")
+                .attr("width", width)
+                .attr("height", height);
+            
+            // Add zoom functionality
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on("zoom", function(event) {
+                    g.attr("transform", event.transform);
+                });
+            
+            svg.call(zoom);
+            const g = svg.append("g");
+            
+            // Create simulation with varied forces for better layout
+            const simulation = d3.forceSimulation(data.nodes)
+                .force("link", d3.forceLink(data.links).id(d => d.id).distance(d => {
+                    // Different distances for primary vs secondary links
+                    if (d.type === 'primary') {
+                        if (d.category === 'Political') return 120;
+                        if (d.category === 'Ecclesiastical') return 100;
+                        if (d.category === 'Courtly') return 90;
+                        return 100;
+                    } else {
+                        return 60; // Shorter secondary links
+                    }
+                }))
+                .force("charge", d3.forceManyBody().strength(d => {
+                    if (d.type === 'central') return -1500;
+                    if (d.type === 'recipient') return -800;
+                    return -400; // Weaker charge for mentioned persons
+                }))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collision", d3.forceCollide().radius(d => {
+                    if (d.type === 'central') return 35;
+                    if (d.type === 'recipient') return 25;
+                    return 15; // Smaller collision radius for mentioned persons
+                }));
+            
+            // Create links with different styling for primary vs secondary
+            const link = g.append("g")
+                .attr("class", "links")
+                .selectAll("line")
+                .data(data.links)
+                .enter().append("line")
+                .attr("stroke", d => d.type === 'primary' ? categoryColors[d.category] : '#64748b')
+                .attr("stroke-width", d => d.type === 'primary' ? 1.5 : 1) // Thinner lines
+                .attr("stroke-opacity", d => d.type === 'primary' ? 0.8 : 0.4)
+                .attr("stroke-dasharray", d => d.type === 'secondary' ? "2,2" : "none"); // Dashed for secondary
+            
+            // Create nodes
+            const node = g.append("g")
+                .attr("class", "nodes")
+                .selectAll("g")
+                .data(data.nodes)
+                .enter().append("g")
+                .attr("class", "node-group")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+            
+            // Add circles with different sizes and colors for different node types
+            node.append("circle")
+                .attr("class", "node")
+                .attr("r", d => {
+                    if (d.type === 'central') return 25;
+                    if (d.type === 'recipient') return 12 + Math.min(d.citations.length, 4);
+                    return 8; // Smaller for mentioned persons
+                })
+                .attr("fill", d => {
+                    if (d.type === 'central') return '#fbbf24'; // gold
+                    if (d.type === 'recipient') return '#60a5fa'; // blue for recipients
+                    return '#94a3b8'; // gray for mentioned persons
+                })
+                .attr("stroke", d => {
+                    if (d.type === 'central') return '#f59e0b';
+                    if (d.type === 'recipient') return '#1e40af';
+                    return '#475569'; // darker gray stroke for mentioned
+                })
+                .attr("stroke-width", d => d.type === 'central' ? 3 : 2);
+            
+            // Add labels with different styling
+            node.append("text")
+                .text(d => d.name)
+                .attr("dy", d => {
+                    if (d.type === 'central') return -30;
+                    if (d.type === 'recipient') return -18;
+                    return -12; // Closer to mentioned person nodes
+                })
+                .attr("text-anchor", "middle")
+                .attr("class", d => {
+                    if (d.type === 'central') return "text-sm font-bold fill-slate-100";
+                    if (d.type === 'recipient') return "text-xs fill-slate-200";
+                    return "text-xs fill-slate-300"; // Lighter text for mentioned persons
+                })
+                .style("pointer-events", "none");
+            
+            // Add biography buttons only for central and recipient nodes
+            node.filter(d => d.type === 'central' || d.type === 'recipient')
+                .append("circle")
+                .attr("class", "bio-btn")
+                .attr("r", 6)
+                .attr("cx", d => d.type === 'central' ? 25 : 15)
+                .attr("cy", -5)
+                .attr("fill", "#475569")
+                .attr("stroke", "#64748b")
+                .attr("stroke-width", 1)
+                .on("click", function(event, d) {
+                    event.stopPropagation();
+                    showBioModal(d.name);
+                });
+            
+            node.filter(d => d.type === 'central' || d.type === 'recipient')
+                .append("text")
+                .attr("class", "bio-btn")
+                .attr("x", d => d.type === 'central' ? 25 : 15)
+                .attr("y", -2)
+                .attr("text-anchor", "middle")
+                .attr("class", "text-xs fill-slate-200")
+                .text("i")
+                .style("pointer-events", "none");
+            
+            // Add hover events
+            node
+                .on("mouseover", function(event, d) {
+                    showTooltip(event, d);
+                })
+                .on("mouseout", function() {
+                    hideTooltip();
+                })
+                .on("mousemove", function(event) {
+                    moveTooltip(event);
+                });
+            
+            // Update positions on tick
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+                
+                node.attr("transform", d => `translate(${d.x}, ${d.y})`);
+            });
+            
+            // Fix Alcuin at center
+            const alcuinNode = data.nodes.find(n => n.type === 'central');
+            if (alcuinNode) {
+                alcuinNode.fx = width / 2;
+                alcuinNode.fy = height / 2;
+            }
+            
+            // Drag functions
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                if (d.type !== 'central') {
+                    d.fx = null;
+                    d.fy = null;
+                }
+            }
+        }
+        
+        // Tooltip functions
+        function showTooltip(event, d) {
+            const tooltip = d3.select("#tooltip");
+            let content = `<strong>${d.name}</strong><br><br>`;
+            
+            if (d.citations && d.citations.length > 0) {
+                content += '<strong>Letters:</strong><br>';
+                d.citations.forEach(citation => {
+                    content += `• ${citation.citation}<br>`;
+                });
+            } else {
+                content += 'Central figure in the correspondence network.';
+            }
+            
+            tooltip
+                .html(content)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px")
+                .classed("hidden", false);
+        }
+        
+        function hideTooltip() {
+            d3.select("#tooltip").classed("hidden", true);
+        }
+        
+        function moveTooltip(event) {
+            d3.select("#tooltip")
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px");
+        }
+        
+        // Biography modal functions
+        function showBioModal(personName) {
+            const bio = getBiography(personName);
+            document.getElementById('bio-title').textContent = personName;
+            document.getElementById('bio-content').textContent = bio.content;
+            document.getElementById('bio-source').textContent = bio.source;
+            document.getElementById('bio-modal').classList.remove('hidden');
+        }
+        
+        function closeBioModal() {
+            document.getElementById('bio-modal').classList.add('hidden');
+        }
+        
+        // Biography data
+        function getBiography(personName) {
+            const biographies = {
+                'Alcuin of York': {
+                    content: 'Alcuin of York (c. 735-804) was an English scholar, clergyman, poet and teacher from York, Northumbria. He became a leading scholar and teacher at the Carolingian court, where he remained a central figure in the Carolingian Renaissance.',
+                    source: 'Source: Eleanor Shipley Duckett, "Alcuin, Friend of Charlemagne" (1951)'
+                },
+                'Charlemagne': {
+                    content: 'Charlemagne (748-814) was King of the Franks from 768, King of the Lombards from 774, and Holy Roman Emperor from 800. He was Alcuin\'s most prominent patron and correspondent.',
+                    source: 'Source: Einhard, "Vita Karoli Magni" (c. 830)'
+                },
+                'Pope Adrian I': {
+                    content: 'Pope Adrian I (700-795) was Pope from 772 to 795. He maintained extensive correspondence with Charlemagne and ecclesiastical figures across Europe, including Alcuin.',
+                    source: 'Source: Liber Pontificalis (9th century)'
+                },
+                'Pope Leo III': {
+                    content: 'Pope Leo III (750-816) was Pope from 795 to 816. He is best known for crowning Charlemagne as Holy Roman Emperor on Christmas Day 800.',
+                    source: 'Source: Liber Pontificalis (9th century)'
+                },
+                'Angilbert': {
+                    content: 'Angilbert (c. 760-814), known as "Homer" in court circles, was a Frankish nobleman, poet, and diplomat. He was one of Alcuin\'s close friends and correspondents.',
+                    source: 'Source: Medieval chronicles and court records'
+                }
+            };
+            
+            return biographies[personName] || {
+                content: `${personName} was a significant figure in Alcuin's correspondence network during the Carolingian period. This person appears in Alcuin's letters as part of the intellectual, religious, or political circles of the time.`,
+                source: 'Source: Alcuin\'s correspondence'
+            };
+        }
+        
+        // Temporal filter functions
+        function setupTemporalControls() {
+            const checkbox = document.getElementById('temporal-filter');
+            const controls = document.getElementById('temporal-controls');
+            const yearSlider = document.getElementById('year-slider');
+            const windowSlider = document.getElementById('window-slider');
+            const yearDisplay = document.getElementById('year-range-display');
+            const windowDisplay = document.getElementById('window-size');
+            
+            checkbox.addEventListener('change', function() {
+                controls.classList.toggle('hidden', !this.checked);
+                if (this.checked) {
+                    updateTemporalFilter();
+                } else {
+                    createVisualization(); // Show all data
+                }
+            });
+            
+            yearSlider.addEventListener('input', updateTemporalFilter);
+            windowSlider.addEventListener('input', function() {
+                windowDisplay.textContent = this.value;
+                updateTemporalFilter();
+            });
+            
+            function updateTemporalFilter() {
+                if (!checkbox.checked) return;
+                
+                const startYear = parseInt(yearSlider.value);
+                const windowSize = parseInt(windowSlider.value);
+                const endYear = startYear + windowSize;
+                
+                yearDisplay.textContent = `${startYear}-${endYear} CE`;
+                
+                // Filter letters by year range - this is the key fix!
+                const filteredLetters = ALL_ALCUIN_LETTERS.filter(letter => 
+                    letter.year && letter.year >= startYear && letter.year <= endYear
+                );
+                
+                console.log(`Filtering: ${startYear}-${endYear}, found ${filteredLetters.length} letters`);
+                
+                // Create filtered network data and visualization
+                const filteredData = createNetworkData(filteredLetters);
+                createVisualization(filteredData);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            createVisualization();
+            setupTemporalControls();
+        });
+    </script>
+</body>
+</html>
