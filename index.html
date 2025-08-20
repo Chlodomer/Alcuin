@@ -644,7 +644,36 @@
         
         // Function to consolidate aliases to proper names
         function consolidateName(name) {
-            // Direct lookup
+            // Handle exact alias matches first
+            if (name === 'Flaccus' || name === 'Albinus') return 'Alcuin of York';
+            if (name === 'David') return 'Charlemagne';
+            if (name === 'Homer') return 'Angilbert';
+            if (name === 'Aquila') return 'Arno of Salzburg';
+            if (name === 'Timothy') return 'Paulinus of Aquileia';
+            if (name === 'Julius') return 'Pippin';
+            if (name === 'Damoetas' || name === 'Flavius') return 'Riculf';
+            if (name === 'Bezaleel') return 'Einhard';
+            if (name === 'Geta') return 'Theodulf of Orléans';
+            if (name === 'Naso') return 'Modoin of Autun';
+            if (name === 'Antoine' || name === 'Augustin') return 'Adalard of Corbie';
+            if (name === 'Symphosius') return 'Amalar of Metz';
+            if (name === 'Menalcas') return 'Audulf';
+            if (name === 'Samuel') return 'Beornrad of Echternach';
+            if (name === 'Andrew') return 'Cadac the Irish';
+            if (name === 'Nehemiah') return 'Eberhard';
+            if (name === 'Nathanael') return 'Fredegisus';
+            if (name === 'Aaron') return 'Hildebold of Cologne';
+            if (name === 'Thyrsis') return 'Meginfrid';
+            if (name === 'Maurus') return 'Hrabanus Maurus';
+            if (name === 'Macarius') return 'Richbod of Trier';
+            if (name === 'Arsenius') return 'Wala';
+            if (name === 'Candidus') return 'Witto';
+            if (name === 'Delia') return 'Gisela (daughter)';
+            if (name === 'Lucia') return 'Gisela (sister)';
+            if (name === 'Eulalia') return 'Gondrade';
+            if (name === 'Columba') return 'Rotrude';
+            
+            // Direct lookup in reverse mapping
             if (ALIAS_TO_PROPER[name]) return ALIAS_TO_PROPER[name];
             if (ALIAS_TO_PROPER[name.toLowerCase()]) return ALIAS_TO_PROPER[name.toLowerCase()];
             
@@ -769,8 +798,8 @@
                         });
                         
                         // Add secondary link from recipient to mentioned person
-                        // Only if they're different people
-                        if (recipientProper !== mentionProper) {
+                        // Only if they're different people and not self-references
+                        if (recipientProper !== mentionProper && mentionProper !== 'Alcuin of York') {
                             links.push({
                                 source: recipientProper,
                                 target: mentionProper,
