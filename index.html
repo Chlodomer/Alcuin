@@ -464,7 +464,7 @@
     header: "EPISTOLA XXXVII. AD DOMNUM REGEM. (",
     content: "Anno 796.) Pro captivis in bello Hunnico, et pro hostibus deprecatur. Domine mi dilectissime, et dulcissime, et omnium desiderantissime mi David! Tristis est Flaccus vester propter infirmitatem vestram...",
     category: "Political",
-    mentions: ["David", "Flaccus", "Huns"]
+    mentions: ["Huns"]
 },
 {
     number: "XXXVIII",
@@ -563,7 +563,7 @@
     header: "EPISTOLA LXXII. AD CAROLUM MAGNUM. (",
     content: "Anno 799.) De controversiis Leonis III Papae cum Romanis; suadet ut rex ad urbem veniat, et causas dijudicet. Gloriosissimo et excellentissimo regi David Albinus humilis levita salutem...",
     category: "Political",
-    mentions: ["Pope Leo III", "Romans", "David", "Albinus"]
+    mentions: ["Pope Leo III", "Romans"]
 },
 {
     number: "LXXIX",
@@ -572,7 +572,7 @@
     header: "EPISTOLA LXXIX. AD CAROLUM MAGNUM. (",
     content: "Anno 800.) Gratulatur coronationis dignitate; hortatur ut Ecclesiasticorum controversias componat. Gloriosissimo et excellentissimo imperatori David Albinus salutem...",
     category: "Political",
-    mentions: ["David", "Albinus"]
+    mentions: []
 },
 {
     number: "LXXX",
@@ -581,7 +581,7 @@
     header: "EPISTOLA LXXX. AD CAROLUM IMPERATOREM. (",
     content: "Anno 801.) De ordinatione clericorum et observantia canonum. Gloriosissimo imperatori David filius vester Flaccus salutem...",
     category: "Political",
-    mentions: ["David", "Flaccus"]
+    mentions: []
 },
 {
     number: "LXXXI",
@@ -590,9 +590,76 @@
     header: "EPISTOLA LXXXI. AD CAROLUM IMPERATOREM. (",
     content: "Anno 802.) De libris mittendis et studiorum utilitate. Domino excellentissimo David imperatori Flaccus humilis diaconus salutem...",
     category: "Political",
-    mentions: ["David", "Flaccus"]
+    mentions: []
 }
 ];
+        
+        // Carolingian Court Aliases - mapping aliases to proper names
+        const CAROLINGIAN_ALIASES = {
+            // Names with aliases (proper name -> alias)
+            'Charlemagne': 'David',
+            'Alcuin of York': 'Flaccus', // Also Albinus, but Flaccus is more common
+            'Angilbert': 'Homer',
+            'Einhard': 'Bezaleel',
+            'Theodulf of Orléans': 'Geta',
+            'Modoin of Autun': 'Naso',
+            'Arno of Salzburg': 'Aquila',
+            'Adalard of Corbie': 'Antoine',
+            'Amalar of Metz': 'Symphosius',
+            'Audulf': 'Menalcas',
+            'Beornrad of Echternach': 'Samuel',
+            'Cadac the Irish': 'Andrew',
+            'Eberhard': 'Nehemiah',
+            'Fredegisus': 'Nathanael',
+            'Gisela (daughter)': 'Delia',
+            'Gisela (sister)': 'Lucia',
+            'Gondrade': 'Eulalia',
+            'Hildebold of Cologne': 'Aaron',
+            'Meginfrid': 'Thyrsis',
+            'Paulinus of Aquileia': 'Timothy',
+            'Pippin': 'Julius',
+            'Hrabanus Maurus': 'Maurus',
+            'Richbod of Trier': 'Macarius',
+            'Riculf': 'Damoetas',
+            'Rotrude': 'Columba',
+            'Wala': 'Arsenius',
+            'Candidus': 'Witto'
+        };
+        
+        // Reverse mapping - alias to proper name for consolidation
+        const ALIAS_TO_PROPER = {};
+        Object.keys(CAROLINGIAN_ALIASES).forEach(proper => {
+            const alias = CAROLINGIAN_ALIASES[proper];
+            ALIAS_TO_PROPER[alias] = proper;
+            ALIAS_TO_PROPER[alias.toLowerCase()] = proper;
+            ALIAS_TO_PROPER[proper.toLowerCase()] = proper;
+        });
+        
+        // Function to get display name with alias in parentheses
+        function getDisplayName(name) {
+            const properName = consolidateName(name);
+            const alias = CAROLINGIAN_ALIASES[properName];
+            return alias ? `${properName} (${alias})` : properName;
+        }
+        
+        // Function to consolidate aliases to proper names
+        function consolidateName(name) {
+            // Direct lookup
+            if (ALIAS_TO_PROPER[name]) return ALIAS_TO_PROPER[name];
+            if (ALIAS_TO_PROPER[name.toLowerCase()]) return ALIAS_TO_PROPER[name.toLowerCase()];
+            
+            // Partial matches for common variations
+            const nameLower = name.toLowerCase();
+            if (nameLower.includes('david') || nameLower.includes('carolus') || nameLower.includes('carolo')) return 'Charlemagne';
+            if (nameLower.includes('flaccus') || nameLower.includes('albinus')) return 'Alcuin of York';
+            if (nameLower.includes('homer') && nameLower.includes('angel')) return 'Angilbert';
+            if (nameLower.includes('aquila') || nameLower.includes('arno')) return 'Arno of Salzburg';
+            if (nameLower.includes('timothy') || nameLower.includes('paulin')) return 'Paulinus of Aquileia';
+            if (nameLower.includes('julius') && nameLower.includes('pipp')) return 'Pippin';
+            if (nameLower.includes('damoetas') || (nameLower.includes('riculf') && nameLower.includes('flavius'))) return 'Riculf';
+            
+            return name; // Return original if no match
+        }
         
         // Add categorization logic for letters that don't have explicit categories
         function categorizeLetters() {
@@ -627,26 +694,33 @@
             'Political': '#f87171'
         };
         
-        // Create network data with secondary connections for mentioned persons
+        // Create network data with secondary connections and alias consolidation
         function createNetworkData(lettersToUse = ALL_ALCUIN_LETTERS) {
             const nodes = new Map();
             const links = [];
             
-            // Add Alcuin as central node
+            // Add Alcuin as central node with proper display name
+            const alcuinDisplayName = getDisplayName('Alcuin of York');
             nodes.set('Alcuin of York', {
                 id: 'Alcuin of York',
-                name: 'Alcuin of York',
+                name: alcuinDisplayName,
+                properName: 'Alcuin of York',
                 type: 'central',
                 citations: [],
                 degree: 0
             });
             
             lettersToUse.forEach(letter => {
+                // Consolidate recipient name to proper form
+                const recipientProper = consolidateName(letter.recipient);
+                const recipientDisplay = getDisplayName(recipientProper);
+                
                 // Add recipient node if not exists
-                if (!nodes.has(letter.recipient)) {
-                    nodes.set(letter.recipient, {
-                        id: letter.recipient,
-                        name: letter.recipient,
+                if (!nodes.has(recipientProper)) {
+                    nodes.set(recipientProper, {
+                        id: recipientProper,
+                        name: recipientDisplay,
+                        properName: recipientProper,
                         type: 'recipient',
                         citations: [],
                         degree: 0
@@ -654,7 +728,7 @@
                 }
                 
                 // Add citation for recipient
-                nodes.get(letter.recipient).citations.push({
+                nodes.get(recipientProper).citations.push({
                     letterNumber: letter.number,
                     year: letter.year,
                     citation: `Letter ${letter.number} (${letter.year || 'c. 790s'}): "${letter.content.substring(0, 100)}..."`
@@ -663,7 +737,7 @@
                 // Add primary link from Alcuin to recipient
                 links.push({
                     source: 'Alcuin of York',
-                    target: letter.recipient,
+                    target: recipientProper,
                     category: letter.category,
                     letter: letter,
                     type: 'primary'
@@ -672,10 +746,15 @@
                 // Add mentioned persons as secondary nodes
                 if (letter.mentions && letter.mentions.length > 0) {
                     letter.mentions.forEach(mention => {
-                        if (!nodes.has(mention)) {
-                            nodes.set(mention, {
-                                id: mention,
-                                name: mention,
+                        // Consolidate mentioned person name
+                        const mentionProper = consolidateName(mention);
+                        const mentionDisplay = getDisplayName(mentionProper);
+                        
+                        if (!nodes.has(mentionProper)) {
+                            nodes.set(mentionProper, {
+                                id: mentionProper,
+                                name: mentionDisplay,
+                                properName: mentionProper,
                                 type: 'mentioned',
                                 citations: [],
                                 degree: 0
@@ -683,20 +762,23 @@
                         }
                         
                         // Add citation for mentioned person
-                        nodes.get(mention).citations.push({
+                        nodes.get(mentionProper).citations.push({
                             letterNumber: letter.number,
                             year: letter.year,
-                            citation: `Mentioned in Letter ${letter.number} (${letter.year || 'c. 790s'}) to ${letter.recipient}`
+                            citation: `Mentioned in Letter ${letter.number} (${letter.year || 'c. 790s'}) to ${recipientDisplay}`
                         });
                         
                         // Add secondary link from recipient to mentioned person
-                        links.push({
-                            source: letter.recipient,
-                            target: mention,
-                            category: letter.category,
-                            letter: letter,
-                            type: 'secondary'
-                        });
+                        // Only if they're different people
+                        if (recipientProper !== mentionProper) {
+                            links.push({
+                                source: recipientProper,
+                                target: mentionProper,
+                                category: letter.category,
+                                letter: letter,
+                                type: 'secondary'
+                            });
+                        }
                     });
                 }
             });
@@ -708,11 +790,12 @@
             });
             
             const nodeArray = Array.from(nodes.values());
-            console.log('Created enhanced network:', {
+            console.log('Created enhanced network with alias consolidation:', {
                 nodes: nodeArray.length, 
                 links: links.length,
                 primary: links.filter(l => l.type === 'primary').length,
-                secondary: links.filter(l => l.type === 'secondary').length
+                secondary: links.filter(l => l.type === 'secondary').length,
+                aliasesUsed: nodeArray.filter(n => n.name.includes('(')).length
             });
             return {nodes: nodeArray, links};
         }
@@ -939,8 +1022,10 @@
         
         // Biography modal functions
         function showBioModal(personName) {
-            const bio = getBiography(personName);
-            document.getElementById('bio-title').textContent = personName;
+            // Use the proper name for biography lookup, but display the full name with alias
+            const properName = consolidateName(personName);
+            const bio = getBiography(properName);
+            document.getElementById('bio-title').textContent = personName; // Display name with alias
             document.getElementById('bio-content').textContent = bio.content;
             document.getElementById('bio-source').textContent = bio.source;
             document.getElementById('bio-modal').classList.remove('hidden');
@@ -954,24 +1039,48 @@
         function getBiography(personName) {
             const biographies = {
                 'Alcuin of York': {
-                    content: 'Alcuin of York (c. 735-804) was an English scholar, clergyman, poet and teacher from York, Northumbria. He became a leading scholar and teacher at the Carolingian court, where he remained a central figure in the Carolingian Renaissance.',
+                    content: 'Alcuin of York (c. 735-804) was an English scholar, clergyman, poet and teacher from York, Northumbria. Known by his court alias "Flaccus" (after Horace), he became a leading scholar and teacher at the Carolingian court, where he remained a central figure in the Carolingian Renaissance.',
                     source: 'Source: Eleanor Shipley Duckett, "Alcuin, Friend of Charlemagne" (1951)'
                 },
                 'Charlemagne': {
-                    content: 'Charlemagne (748-814) was King of the Franks from 768, King of the Lombards from 774, and Holy Roman Emperor from 800. He was Alcuin\'s most prominent patron and correspondent.',
+                    content: 'Charlemagne (748-814), known by his court alias "David," was King of the Franks from 768, King of the Lombards from 774, and Holy Roman Emperor from 800. He was Alcuin\'s most prominent patron and the central figure of the Carolingian Renaissance.',
                     source: 'Source: Einhard, "Vita Karoli Magni" (c. 830)'
                 },
+                'Angilbert': {
+                    content: 'Angilbert (c. 760-814), known as "Homer" in court circles, was a Frankish nobleman, poet, and diplomat. He served as lay abbot of Saint-Riquier and was one of Charlemagne\'s courtiers and Alcuin\'s close friends.',
+                    source: 'Source: Encyclopedia Britannica'
+                },
+                'Arno of Salzburg': {
+                    content: 'Arno of Salzburg (c. 750-821), known by his court alias "Aquila" (Eagle), was Archbishop of Salzburg and a key ecclesiastical figure in the Carolingian Empire. He was instrumental in missionary work among the Slavs.',
+                    source: 'Source: Medieval ecclesiastical records'
+                },
+                'Paulinus of Aquileia': {
+                    content: 'Paulinus of Aquileia (c. 730-802), known by his court alias "Timothy," was Patriarch of Aquileia and a prominent theologian. He participated in the Council of Frankfurt (794) and was active in missionary work among the Avars.',
+                    source: 'Source: Patrologia Latina'
+                },
+                'Einhard': {
+                    content: 'Einhard (c. 775-840), known by his court alias "Bezaleel," was a Frankish scholar and courtier. He is best known as the biographer of Charlemagne, writing the influential "Vita Karoli Magni."',
+                    source: 'Source: Einhard, "Vita Karoli Magni"'
+                },
+                'Theodulf of Orléans': {
+                    content: 'Theodulf of Orléans (c. 760-821), known by his court alias "Geta," was a Visigothic poet and bishop. He was one of the most important literary figures of the Carolingian Renaissance and authored the "Libri Carolini."',
+                    source: 'Source: Medieval literary sources'
+                },
+                'Pippin': {
+                    content: 'Pippin of Italy (773-810), known by his court alias "Julius," was the second son of Charlemagne and King of the Lombards from 781. He ruled the Italian territories of the Carolingian Empire.',
+                    source: 'Source: Carolingian chronicles'
+                },
+                'Riculf': {
+                    content: 'Riculf of Mainz (died 813), known by his court alias "Damoetas," was Archbishop of Mainz and an important ecclesiastical figure in the Carolingian court. He was involved in various church reforms.',
+                    source: 'Source: Medieval ecclesiastical records'
+                },
                 'Pope Adrian I': {
-                    content: 'Pope Adrian I (700-795) was Pope from 772 to 795. He maintained extensive correspondence with Charlemagne and ecclesiastical figures across Europe, including Alcuin.',
+                    content: 'Pope Adrian I (700-795) was Pope from 772 to 795. He maintained extensive correspondence with Charlemagne and ecclesiastical figures across Europe, including Alcuin, and was instrumental in the Carolingian Renaissance.',
                     source: 'Source: Liber Pontificalis (9th century)'
                 },
                 'Pope Leo III': {
-                    content: 'Pope Leo III (750-816) was Pope from 795 to 816. He is best known for crowning Charlemagne as Holy Roman Emperor on Christmas Day 800.',
+                    content: 'Pope Leo III (750-816) was Pope from 795 to 816. He is best known for crowning Charlemagne as Holy Roman Emperor on Christmas Day 800, establishing the precedent for papal coronation of emperors.',
                     source: 'Source: Liber Pontificalis (9th century)'
-                },
-                'Angilbert': {
-                    content: 'Angilbert (c. 760-814), known as "Homer" in court circles, was a Frankish nobleman, poet, and diplomat. He was one of Alcuin\'s close friends and correspondents.',
-                    source: 'Source: Medieval chronicles and court records'
                 }
             };
             
