@@ -673,6 +673,14 @@
             if (name === 'Eulalia') return 'Gondrade';
             if (name === 'Columba') return 'Rotrude';
             
+            // Historical figure exact matches - prevent duplicates
+            if (name === 'King Offa') return 'King Offa of Mercia';
+            if (name === 'King Æthelred') return 'King Æthelred of Northumbria';
+            if (name === 'King Coenwulf') return 'King Coenwulf of Mercia';
+            if (name === 'Pippin' && !name.includes('King')) return 'Pippin';
+            if (name === 'Pope Adrian') return 'Pope Adrian I';
+            if (name === 'Pope Leo') return 'Pope Leo III';
+            
             // Direct lookup in reverse mapping
             if (ALIAS_TO_PROPER[name]) return ALIAS_TO_PROPER[name];
             if (ALIAS_TO_PROPER[name.toLowerCase()]) return ALIAS_TO_PROPER[name.toLowerCase()];
@@ -688,6 +696,12 @@
             if (nameLower.includes('damoetas') || (nameLower.includes('riculf') && nameLower.includes('flavius'))) return 'Riculf';
             if (nameLower.includes('bezaleel') || nameLower.includes('nardus') || (nameLower.includes('einhard') || nameLower.includes('eginhard'))) return 'Einhard';
             if (nameLower.includes('candidus') && !nameLower.includes('filius')) return 'Witto'; // Avoid "filius nostro Candido"
+            
+            // Historical figure consolidations
+            if (nameLower.includes('offa') && nameLower.includes('king')) return 'King Offa of Mercia';
+            if (nameLower.includes('æthelred') && nameLower.includes('king')) return 'King Æthelred of Northumbria';
+            if (nameLower.includes('coenwulf') && nameLower.includes('king')) return 'King Coenwulf of Mercia';
+            if (nameLower.includes('eardwulf') && nameLower.includes('king')) return 'King Eardwulf';
             
             return name; // Return original if no match
         }
