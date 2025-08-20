@@ -596,20 +596,20 @@
         
         // Carolingian Court Aliases - mapping aliases to proper names
         const CAROLINGIAN_ALIASES = {
-            // Names with aliases (proper name -> alias)
-            'Charlemagne': 'David',
-            'Alcuin of York': 'Flaccus', // Also Albinus, but Flaccus is more common
+            // Names with aliases (proper name -> primary alias)
+            'Charlemagne': 'David', // Also Aeneas
+            'Alcuin of York': 'Flaccus', // Also Albinus, Publius Albinus
             'Angilbert': 'Homer',
-            'Einhard': 'Bezaleel',
-            'Theodulf of Orléans': 'Geta',
+            'Einhard': 'Bezaleel', // Also Beseleel, Nardus, Nardulus
+            'Theodulf of Orléans': 'Geta', // Also Pindar
             'Modoin of Autun': 'Naso',
             'Arno of Salzburg': 'Aquila',
-            'Adalard of Corbie': 'Antoine',
+            'Adalard of Corbie': 'Antoine', // Also Augustin, Anthony, Augustine
             'Amalar of Metz': 'Symphosius',
             'Audulf': 'Menalcas',
             'Beornrad of Echternach': 'Samuel',
             'Cadac the Irish': 'Andrew',
-            'Eberhard': 'Nehemiah',
+            'Eberhard': 'Nehemiah', // Also Nemias
             'Fredegisus': 'Nathanael',
             'Gisela (daughter)': 'Delia',
             'Gisela (sister)': 'Lucia',
@@ -617,13 +617,13 @@
             'Hildebold of Cologne': 'Aaron',
             'Meginfrid': 'Thyrsis',
             'Paulinus of Aquileia': 'Timothy',
-            'Pippin': 'Julius',
+            'Pippin': 'Julius', // Also Jules
             'Hrabanus Maurus': 'Maurus',
             'Richbod of Trier': 'Macarius',
-            'Riculf': 'Damoetas',
+            'Riculf': 'Damoetas', // Also Flavius, Flavius Damoetas
             'Rotrude': 'Columba',
             'Wala': 'Arsenius',
-            'Candidus': 'Witto'
+            'Witto': 'Candidus' // Fixed: Witto = Candidus, not the reverse
         };
         
         // Reverse mapping - alias to proper name for consolidation
@@ -644,23 +644,23 @@
         
         // Function to consolidate aliases to proper names
         function consolidateName(name) {
-            // Handle exact alias matches first
-            if (name === 'Flaccus' || name === 'Albinus') return 'Alcuin of York';
-            if (name === 'David') return 'Charlemagne';
+            // Handle exact alias matches first - comprehensive list
+            if (name === 'Flaccus' || name === 'Albinus' || name === 'Publius Albinus') return 'Alcuin of York';
+            if (name === 'David' || name === 'Aeneas') return 'Charlemagne';
             if (name === 'Homer') return 'Angilbert';
             if (name === 'Aquila') return 'Arno of Salzburg';
             if (name === 'Timothy') return 'Paulinus of Aquileia';
-            if (name === 'Julius') return 'Pippin';
-            if (name === 'Damoetas' || name === 'Flavius') return 'Riculf';
-            if (name === 'Bezaleel') return 'Einhard';
-            if (name === 'Geta') return 'Theodulf of Orléans';
+            if (name === 'Julius' || name === 'Jules') return 'Pippin';
+            if (name === 'Damoetas' || name === 'Flavius' || name === 'Flavius Damoetas') return 'Riculf';
+            if (name === 'Bezaleel' || name === 'Beseleel' || name === 'Nardus' || name === 'Nardulus') return 'Einhard';
+            if (name === 'Geta' || name === 'Pindar') return 'Theodulf of Orléans';
             if (name === 'Naso') return 'Modoin of Autun';
-            if (name === 'Antoine' || name === 'Augustin') return 'Adalard of Corbie';
+            if (name === 'Antoine' || name === 'Augustin' || name === 'Anthony' || name === 'Augustine') return 'Adalard of Corbie';
             if (name === 'Symphosius') return 'Amalar of Metz';
             if (name === 'Menalcas') return 'Audulf';
             if (name === 'Samuel') return 'Beornrad of Echternach';
             if (name === 'Andrew') return 'Cadac the Irish';
-            if (name === 'Nehemiah') return 'Eberhard';
+            if (name === 'Nehemiah' || name === 'Nemias') return 'Eberhard';
             if (name === 'Nathanael') return 'Fredegisus';
             if (name === 'Aaron') return 'Hildebold of Cologne';
             if (name === 'Thyrsis') return 'Meginfrid';
@@ -677,15 +677,17 @@
             if (ALIAS_TO_PROPER[name]) return ALIAS_TO_PROPER[name];
             if (ALIAS_TO_PROPER[name.toLowerCase()]) return ALIAS_TO_PROPER[name.toLowerCase()];
             
-            // Partial matches for common variations
+            // Partial matches for common variations and edge cases
             const nameLower = name.toLowerCase();
-            if (nameLower.includes('david') || nameLower.includes('carolus') || nameLower.includes('carolo')) return 'Charlemagne';
+            if (nameLower.includes('david') || nameLower.includes('carolus') || nameLower.includes('carolo') || nameLower.includes('aeneas')) return 'Charlemagne';
             if (nameLower.includes('flaccus') || nameLower.includes('albinus')) return 'Alcuin of York';
             if (nameLower.includes('homer') && nameLower.includes('angel')) return 'Angilbert';
             if (nameLower.includes('aquila') || nameLower.includes('arno')) return 'Arno of Salzburg';
             if (nameLower.includes('timothy') || nameLower.includes('paulin')) return 'Paulinus of Aquileia';
             if (nameLower.includes('julius') && nameLower.includes('pipp')) return 'Pippin';
             if (nameLower.includes('damoetas') || (nameLower.includes('riculf') && nameLower.includes('flavius'))) return 'Riculf';
+            if (nameLower.includes('bezaleel') || nameLower.includes('nardus') || (nameLower.includes('einhard') || nameLower.includes('eginhard'))) return 'Einhard';
+            if (nameLower.includes('candidus') && !nameLower.includes('filius')) return 'Witto'; // Avoid "filius nostro Candido"
             
             return name; // Return original if no match
         }
