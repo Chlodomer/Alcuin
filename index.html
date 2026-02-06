@@ -4,147 +4,722 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alcuin of York - Letters Network Visualization</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+        :root {
+            --charcoal-950: #111315;
+            --charcoal-900: #1a1d20;
+            --charcoal-800: #24282c;
+            --concrete-700: #40464d;
+            --concrete-600: #535a62;
+            --concrete-500: #6a727b;
+            --concrete-300: #abb3bc;
+            --concrete-200: #c9d0d7;
+            --paper-100: #f4f5f6;
+            --paper-50: #fcfdfd;
+            --accent-500: #d56a32;
+            --accent-400: #ea8c5c;
+            --font-ui: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--font-ui);
+            color: var(--paper-100);
+            background:
+                radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.04), transparent 35%),
+                radial-gradient(circle at 90% 90%, rgba(213, 106, 50, 0.12), transparent 40%),
+                linear-gradient(180deg, #101214 0%, #171a1d 58%, #1d2023 100%);
+        }
+
+        .app-shell {
+            max-width: none;
+            margin: 0 auto;
+            padding: 1rem 1.2rem;
+        }
+
+        .page-header {
+            margin-bottom: 1rem;
+            border: 1px solid rgba(171, 179, 188, 0.22);
+            background: linear-gradient(180deg, rgba(36, 40, 44, 0.9), rgba(26, 29, 32, 0.92));
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+        }
+
+        .page-title {
+            margin: 0;
+            font-size: clamp(1.8rem, 2.8vw, 2.5rem);
+            line-height: 1.1;
+            letter-spacing: 0.02em;
+            color: var(--paper-50);
+        }
+
+        .page-subtitle {
+            margin: 0.3rem 0 0;
+            color: var(--concrete-200);
+            font-size: clamp(1rem, 1.6vw, 1.2rem);
+            font-weight: 500;
+        }
+
+        .intro-copy {
+            margin: 0.85rem 0 0;
+            max-width: 62rem;
+            font-size: 0.9rem;
+            color: var(--concrete-300);
+            line-height: 1.5;
+        }
+
+        .workspace-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) clamp(230px, 15vw, 290px);
+            gap: 0.8rem;
+            align-items: start;
+        }
+
+        .network-panel {
+            width: 100%;
+            height: 82vh;
+            min-height: 680px;
+            border-radius: 12px;
+            border: 1px solid rgba(171, 179, 188, 0.22);
+            background:
+                linear-gradient(180deg, rgba(43, 47, 52, 0.34), rgba(17, 19, 21, 0.55)),
+                repeating-linear-gradient(
+                    -45deg,
+                    rgba(255, 255, 255, 0.02) 0,
+                    rgba(255, 255, 255, 0.02) 1px,
+                    transparent 1px,
+                    transparent 10px
+                );
+            overflow: hidden;
+        }
+
+        .control-panel {
+            border: 1px solid rgba(171, 179, 188, 0.22);
+            border-radius: 12px;
+            padding: 0.8rem;
+            background: linear-gradient(180deg, rgba(36, 40, 44, 0.95), rgba(26, 29, 32, 0.96));
+            backdrop-filter: blur(3px);
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+        }
+
+        .panel-section + .panel-section {
+            margin-top: 0.95rem;
+            padding-top: 0.95rem;
+            border-top: 1px solid rgba(171, 179, 188, 0.2);
+        }
+
+        .panel-title {
+            margin: 0 0 0.65rem;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--paper-50);
+        }
+
+        .legend-list,
+        .node-list {
+            display: grid;
+            gap: 0.45rem;
+            font-size: 0.8rem;
+            color: var(--concrete-200);
+        }
+
+        .legend-row,
+        .node-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-icon,
+        .node-icon {
+            width: 1rem;
+            color: var(--concrete-300);
+            font-size: 0.8rem;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .legend-swatch,
+        .node-swatch {
+            border-radius: 999px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .legend-swatch {
+            width: 1.2rem;
+            height: 0.22rem;
+        }
+
+        .legend-swatch.personal { background: #dadde1; }
+        .legend-swatch.ecclesiastical { background: #9ea7b0; }
+        .legend-swatch.scholarly { background: #f8fafb; }
+        .legend-swatch.diplomatic { background: var(--accent-500); }
+
+        .node-swatch {
+            width: 0.68rem;
+            height: 0.68rem;
+        }
+
+        .node-swatch.central { background: var(--accent-500); }
+        .node-swatch.recipient { background: #d9dee3; }
+        .node-swatch.mentioned { background: #8d96a0; }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .toggle-label {
+            font-size: 0.82rem;
+            color: var(--paper-100);
+            cursor: pointer;
+        }
+
+        .muted-label {
+            font-size: 0.75rem;
+            color: var(--concrete-300);
+            margin: 0 0 0.5rem;
+        }
+
+        .year-edge-row {
+            display: flex;
+            justify-content: space-between;
+            color: var(--concrete-500);
+            font-size: 0.72rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .window-row {
+            margin-top: 0.45rem;
+            font-size: 0.75rem;
+            color: var(--concrete-300);
+        }
+
+        .print-row {
+            margin-top: 0.25rem;
+            display: grid;
+            gap: 0.45rem;
+        }
+
+        .print-select {
+            width: 100%;
+            border: 1px solid rgba(171, 179, 188, 0.34);
+            border-radius: 7px;
+            background: rgba(22, 24, 27, 0.96);
+            color: var(--paper-100);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            padding: 0.45rem 0.5rem;
+        }
+
+        .print-hint {
+            margin: 0;
+            color: var(--concrete-300);
+            font-size: 0.72rem;
+            line-height: 1.35;
+        }
+
+        .control-actions {
+            display: flex;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+        }
+
+        .control-button {
+            border: 1px solid rgba(171, 179, 188, 0.34);
+            border-radius: 7px;
+            background: rgba(27, 30, 34, 0.96);
+            color: var(--paper-100);
+            font-family: var(--font-ui);
+            font-size: 0.74rem;
+            padding: 0.42rem 0.6rem;
+            cursor: pointer;
+        }
+
+        .control-button:hover {
+            border-color: rgba(213, 106, 50, 0.55);
+        }
+
+        .evidence-drawer {
+            border: 1px solid rgba(171, 179, 188, 0.22);
+            border-radius: 8px;
+            background: rgba(20, 22, 25, 0.84);
+            padding: 0.55rem;
+            max-height: 24vh;
+            min-height: 7rem;
+            overflow-y: auto;
+        }
+
+        .evidence-title {
+            margin: 0 0 0.35rem;
+            color: var(--paper-50);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .evidence-meta {
+            margin: 0 0 0.45rem;
+            color: var(--concrete-300);
+            font-size: 0.7rem;
+        }
+
+        .evidence-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 0.4rem;
+        }
+
+        .evidence-item {
+            border-left: 2px solid rgba(213, 106, 50, 0.7);
+            padding-left: 0.45rem;
+            color: var(--concrete-200);
+            font-size: 0.72rem;
+            line-height: 1.4;
+        }
+
+        .control-slider {
+            width: 100%;
+            accent-color: var(--accent-500);
+            margin-bottom: 0.45rem;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(17, 19, 21, 0.97);
+            color: var(--paper-50);
+            padding: 0.7rem;
+            border-radius: 8px;
+            border: 1px solid rgba(171, 179, 188, 0.3);
+            pointer-events: none;
+            max-width: 400px;
+            font-size: 0.75rem;
+            line-height: 1.45;
+            z-index: 1000;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+        }
+
         .node {
             cursor: pointer;
         }
+
         .node:hover {
             stroke-width: 3px;
         }
-        .tooltip {
-            position: absolute;
-            background: rgba(15, 23, 42, 0.95);
-            color: #f8fafc;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #475569;
-            pointer-events: none;
-            max-width: 400px;
-            font-size: 12px;
-            line-height: 1.4;
-            z-index: 1000;
+
+        .node-label-bg {
+            fill: rgba(244, 247, 250, 0.95);
+            stroke: rgba(32, 36, 40, 0.42);
+            stroke-width: 0.95;
         }
+
+        .node-label-bg-central {
+            fill: rgba(255, 248, 242, 0.97);
+            stroke: rgba(213, 106, 50, 0.74);
+            stroke-width: 1.2;
+        }
+
+        .node-label-bg-recipient {
+            fill: rgba(245, 248, 251, 0.96);
+        }
+
+        .node-label-bg-mentioned {
+            fill: rgba(219, 225, 232, 0.9);
+            stroke: rgba(58, 64, 70, 0.34);
+        }
+
+        .node-label-text {
+            fill: #1a1f24;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            text-rendering: geometricPrecision;
+        }
+
+        .node-label-text-central {
+            font-size: 13px;
+            font-weight: 700;
+            fill: #1a1f24;
+        }
+
+        .node-label-text-mentioned {
+            font-size: 10px;
+            fill: #252b31;
+        }
+
+        .node-label-alias {
+            fill: #3d444b;
+            font-size: 9px;
+            font-weight: 600;
+        }
+
         .bio-btn {
             cursor: pointer;
             opacity: 0;
             transition: opacity 0.2s;
         }
+
         .node-group:hover .bio-btn {
             opacity: 1;
         }
+
+        .bio-modal {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(9, 10, 11, 0.68);
+            z-index: 1000;
+        }
+
+        .bio-card {
+            width: min(100%, 820px);
+            max-height: 82vh;
+            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(171, 179, 188, 0.24);
+            background: linear-gradient(180deg, #24282c, #1a1d20);
+            padding: 1.1rem;
+            box-shadow: 0 14px 48px rgba(0, 0, 0, 0.45);
+        }
+
+        .bio-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .bio-title {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--paper-50);
+        }
+
+        .bio-close {
+            border: 1px solid rgba(171, 179, 188, 0.35);
+            background: transparent;
+            color: var(--concrete-300);
+            border-radius: 8px;
+            width: 2rem;
+            height: 2rem;
+            cursor: pointer;
+            font-size: 1.15rem;
+            line-height: 1;
+        }
+
+        .bio-close:hover {
+            color: var(--paper-50);
+            border-color: rgba(213, 106, 50, 0.45);
+        }
+
+        .bio-content {
+            color: #d9dee3;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+
+        .bio-source {
+            margin-top: 0.8rem;
+            color: var(--concrete-300);
+            font-size: 0.78rem;
+            font-style: italic;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 1120px) {
+            .workspace-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .control-panel {
+                position: static;
+            }
+
+            .network-panel {
+                min-height: 520px;
+                height: 68vh;
+            }
+        }
+
+        @media print {
+            @page {
+                margin: 0.35in;
+            }
+
+            body {
+                background: #ffffff;
+                color: #111315;
+            }
+
+            .app-shell {
+                max-width: none;
+                padding: 0.4in;
+            }
+
+            .page-header,
+            .control-panel,
+            .network-panel {
+                border-color: #9ba3ab;
+                background: #ffffff;
+                color: #101214;
+            }
+
+            .page-title,
+            .panel-title {
+                color: #101214;
+            }
+
+            .page-subtitle,
+            .intro-copy,
+            .muted-label,
+            .year-edge-row,
+            .window-row {
+                color: #30343a;
+            }
+
+            .workspace-layout {
+                grid-template-columns: minmax(0, 1fr) 2.15in;
+                gap: 0.18in;
+                align-items: start;
+            }
+
+            body[data-print-target="book6x9"] .workspace-layout {
+                grid-template-columns: minmax(0, 1fr) 2.05in;
+            }
+
+            body[data-print-target="a5"] .workspace-layout {
+                grid-template-columns: minmax(0, 1fr) 1.95in;
+            }
+
+            .control-panel {
+                position: static;
+            }
+
+            .network-panel {
+                min-height: 6.7in;
+                height: 6.7in;
+            }
+
+            body[data-print-target="book6x9"] .network-panel {
+                min-height: 6.45in;
+                height: 6.45in;
+            }
+
+            body[data-print-target="a5"] .network-panel {
+                min-height: 6.05in;
+                height: 6.05in;
+            }
+
+            .node-label-bg,
+            .node-label-bg-central,
+            .node-label-bg-recipient,
+            .node-label-bg-mentioned {
+                fill: rgba(255, 255, 255, 0.93);
+                stroke: rgba(46, 51, 57, 0.5);
+            }
+
+            .node-label-text,
+            .node-label-text-central,
+            .node-label-text-mentioned,
+            .node-label-alias {
+                fill: #111315;
+            }
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100">
-    <div class="container mx-auto px-4 py-6">
-        <header class="text-center mb-6">
-            <h1 class="text-4xl font-bold text-slate-100 mb-2">Alcuin of York</h1>
-            <h2 class="text-xl text-slate-300 mb-3">Letters Network Visualization (c. 787-804 CE)</h2>
-            <p class="text-sm text-slate-400 max-w-3xl mx-auto">
-                Explore the correspondence network of Alcuin of York. 
-                <strong>Hover</strong> over nodes, <strong>click "i" buttons</strong> for biographies, 
-                <strong>drag</strong> nodes to rearrange.
+<body>
+    <div class="app-shell">
+        <header class="page-header">
+            <h1 class="page-title">Alcuin of York</h1>
+            <h2 class="page-subtitle">Letters Network Visualization (c. 787-804 CE)</h2>
+            <p class="intro-copy">
+                Explore the correspondence network. <strong>Hover</strong> over nodes, use the <strong>[i]</strong> marker for biographies, and <strong>drag</strong> to refine layout.
             </p>
         </header>
-        
-        <!-- Legend & Controls -->
-        <div class="fixed top-6 right-6 bg-slate-800 p-4 rounded-lg border border-slate-600 z-50">
-            <h3 class="text-sm font-semibold mb-3 text-slate-200">Letter Categories</h3>
-            <div class="space-y-2 text-xs mb-4">
-                <div class="flex items-center">
-                    <div class="w-4 h-1 bg-blue-400 mr-2"></div>
-                    <span>Personal</span>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-4 h-1 bg-green-400 mr-2"></div>
-                    <span>Ecclesiastical</span>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-4 h-1 bg-purple-400 mr-2"></div>
-                    <span>Scholarly</span>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-4 h-1 bg-amber-400 mr-2"></div>
-                    <span>Diplomatic</span>
-                </div>
-            </div>
-            
-            <!-- Node Types -->
-            <div class="border-t border-slate-600 pt-3 mb-4">
-                <h4 class="text-xs font-semibold mb-2 text-slate-200">Node Types</h4>
-                <div class="space-y-1 text-xs">
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 rounded-full bg-yellow-400 mr-2"></div>
-                        <span>Alcuin (Central)</span>
+
+        <main class="workspace-layout">
+            <div id="network-container" class="network-panel"></div>
+
+            <aside class="control-panel" aria-label="Visualization controls">
+                <section class="panel-section">
+                    <h3 class="panel-title">Letter Categories</h3>
+                    <div class="legend-list">
+                        <div class="legend-row">
+                            <span class="legend-icon">▭</span>
+                            <span class="legend-swatch personal"></span>
+                            <span>Personal</span>
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-icon">▭</span>
+                            <span class="legend-swatch ecclesiastical"></span>
+                            <span>Ecclesiastical</span>
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-icon">▭</span>
+                            <span class="legend-swatch scholarly"></span>
+                            <span>Scholarly</span>
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-icon">▭</span>
+                            <span class="legend-swatch diplomatic"></span>
+                            <span>Diplomatic</span>
+                        </div>
                     </div>
-                    <div class="flex items-center">
-                        <div class="w-3 h-3 rounded-full bg-blue-400 mr-2"></div>
-                        <span>Recipients</span>
+                </section>
+
+                <section class="panel-section">
+                    <h3 class="panel-title">Node Types</h3>
+                    <div class="node-list">
+                        <div class="node-row">
+                            <span class="node-icon">◉</span>
+                            <span class="node-swatch central"></span>
+                            <span>Alcuin (Central)</span>
+                        </div>
+                        <div class="node-row">
+                            <span class="node-icon">◎</span>
+                            <span class="node-swatch recipient"></span>
+                            <span>Recipients</span>
+                        </div>
+                        <div class="node-row">
+                            <span class="node-icon">◌</span>
+                            <span class="node-swatch mentioned"></span>
+                            <span>Mentioned Persons</span>
+                        </div>
                     </div>
-                    <div class="flex items-center">
-                        <div class="w-2 h-2 rounded-full bg-slate-400 mr-3"></div>
-                        <span>Mentioned Persons</span>
+                </section>
+
+                <section class="panel-section">
+                    <h3 class="panel-title">Temporal Filter</h3>
+                    <div class="toggle-row">
+                        <input type="checkbox" id="temporal-filter">
+                        <label for="temporal-filter" class="toggle-label">Enable range filter</label>
                     </div>
+
+                    <div id="temporal-controls" class="hidden">
+                        <p class="muted-label">Years: <span id="year-range-display">790-793 CE</span></p>
+                        <input type="range"
+                               id="year-slider"
+                               min="790"
+                               max="802"
+                               value="790"
+                               step="1"
+                               class="control-slider">
+                        <div class="year-edge-row">
+                            <span>790</span>
+                            <span>802</span>
+                        </div>
+                        <p class="window-row">Window: <span id="window-size">4</span> years</p>
+                        <input type="range"
+                               id="window-slider"
+                               min="2"
+                               max="8"
+                               value="4"
+                               step="1"
+                               class="control-slider">
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <h3 class="panel-title">Print Format</h3>
+                    <div class="print-row">
+                        <label class="muted-label" for="print-target">Target page</label>
+                        <select id="print-target" class="print-select">
+                            <option value="book6x9">Book 6 x 9 in</option>
+                            <option value="a5">A5 (148 x 210 mm)</option>
+                        </select>
+                        <p class="print-hint">This adjusts spacing and label density before print/export.</p>
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <h3 class="panel-title">Label Density</h3>
+                    <div class="print-row">
+                        <label class="muted-label" for="label-density">Visible labels</label>
+                        <select id="label-density" class="print-select">
+                            <option value="primary">Primary names (recommended)</option>
+                            <option value="key">Primary + key mentions</option>
+                            <option value="all">All names (crowded)</option>
+                        </select>
+                        <p class="print-hint">For print quality, use Primary names or Key mentions.</p>
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <h3 class="panel-title">Search + Focus</h3>
+                    <div class="print-row">
+                        <label class="muted-label" for="focus-search">Person</label>
+                        <input id="focus-search" class="print-select" list="node-options" placeholder="Search a person">
+                        <datalist id="node-options"></datalist>
+                        <label class="muted-label" for="focus-depth">Focus depth</label>
+                        <select id="focus-depth" class="print-select">
+                            <option value="1">1 hop</option>
+                            <option value="2">2 hops</option>
+                        </select>
+                        <div class="control-actions">
+                            <button id="focus-apply" type="button" class="control-button">Apply Focus</button>
+                            <button id="focus-clear" type="button" class="control-button">Clear</button>
+                        </div>
+                        <p class="print-hint">Highlights the selected person and nearby relationships.</p>
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <h3 class="panel-title">Path Explorer</h3>
+                    <div class="print-row">
+                        <label class="muted-label" for="path-from">From</label>
+                        <select id="path-from" class="print-select"></select>
+                        <label class="muted-label" for="path-to">To</label>
+                        <select id="path-to" class="print-select"></select>
+                        <div class="control-actions">
+                            <button id="path-show" type="button" class="control-button">Show Path</button>
+                            <button id="path-clear" type="button" class="control-button">Clear</button>
+                        </div>
+                        <p id="path-status" class="print-hint">Pick two people to reveal the shortest path.</p>
+                    </div>
+                </section>
+
+                <section class="panel-section">
+                    <h3 class="panel-title">Evidence Drawer</h3>
+                    <div id="evidence-drawer" class="evidence-drawer">
+                        <p class="print-hint">Select a node in the graph to view supporting letter evidence.</p>
+                    </div>
+                </section>
+            </aside>
+        </main>
+
+        <div id="bio-modal" class="bio-modal hidden">
+            <div class="bio-card">
+                <div class="bio-header">
+                    <h3 id="bio-title" class="bio-title"></h3>
+                    <button onclick="closeBioModal()" class="bio-close" aria-label="Close biography">×</button>
                 </div>
-            </div>
-            
-            <!-- Temporal Filter -->
-            <div class="border-t border-slate-600 pt-3">
-                <div class="flex items-center mb-3">
-                    <input type="checkbox" id="temporal-filter" class="mr-2">
-                    <label for="temporal-filter" class="text-xs text-slate-200 cursor-pointer">
-                        Temporal Filter
-                    </label>
-                </div>
-                
-                <div id="temporal-controls" class="hidden">
-                    <div class="text-xs text-slate-300 mb-2">
-                        Years: <span id="year-range-display">790-793 CE</span>
-                    </div>
-                    <input type="range" 
-                           id="year-slider" 
-                           min="790" 
-                           max="802" 
-                           value="790" 
-                           step="1"
-                           class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer mb-2">
-                    <div class="flex justify-between text-xs text-slate-400">
-                        <span>790</span>
-                        <span>802</span>
-                    </div>
-                    <div class="text-xs text-slate-400 mt-1">
-                        Window: <span id="window-size">4</span> years
-                    </div>
-                    <input type="range" 
-                           id="window-slider" 
-                           min="2" 
-                           max="8" 
-                           value="4" 
-                           step="1"
-                           class="w-full h-1 bg-slate-600 rounded-lg appearance-none cursor-pointer mt-1">
-                </div>
+                <div id="bio-content" class="bio-content"></div>
+                <div id="bio-source" class="bio-source"></div>
             </div>
         </div>
-        
-        <!-- Main Visualization -->
-        <div id="network-container" class="w-full bg-slate-900 rounded-lg border border-slate-700" style="height: 70vh;"></div>
-        
-        <!-- Biography Modal -->
-        <div id="bio-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
-            <div class="flex items-center justify-center h-full p-4">
-                <div class="bg-slate-800 p-6 rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto border border-slate-600">
-                    <div class="flex justify-between items-start mb-4">
-                        <h3 id="bio-title" class="text-xl font-bold text-slate-100"></h3>
-                        <button onclick="closeBioModal()" class="text-slate-400 hover:text-slate-200">×</button>
-                    </div>
-                    <div id="bio-content" class="text-slate-300 text-sm leading-relaxed"></div>
-                    <div id="bio-source" class="text-xs text-slate-400 mt-4 italic"></div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Tooltip -->
+
         <div id="tooltip" class="tooltip hidden"></div>
     </div>
 
@@ -747,12 +1322,22 @@
         // Initialize categories
         categorizeLetters();
         
-        // Color mapping
+        // Industrial palette: concrete grays with orange accent
         const categoryColors = {
-            'Personal': '#60a5fa',      // blue
-            'Ecclesiastical': '#4ade80', // green
-            'Scholarly': '#c084fc',      // purple
-            'Diplomatic': '#fbbf24'      // amber
+            'Personal': '#d4d9df',
+            'Ecclesiastical': '#a7afb8',
+            'Scholarly': '#f2f5f7',
+            'Diplomatic': '#d56a32'
+        };
+
+        let renderMode = 'screen';
+        let latestNetworkData = null;
+        const uiState = {
+            focusNodeId: null,
+            focusDepth: 1,
+            pathFrom: null,
+            pathTo: null,
+            selectedNodeId: null
         };
         
         // Create network data with secondary connections and alias consolidation
@@ -861,147 +1446,835 @@
             return {nodes: nodeArray, links};
         }
         
+        function getLayoutProfile(width, height) {
+            const printTarget = document.getElementById('print-target')?.value || 'book6x9';
+            const selectedDensity = document.getElementById('label-density')?.value || 'primary';
+            const isPrint = renderMode === 'print';
+            const profile = {
+                zoomMin: 0.55,
+                zoomMax: 2.7,
+                linkDistancePrimary: {
+                    diplomatic: 178,
+                    scholarly: 166,
+                    default: 172
+                },
+                linkDistanceSecondary: 120,
+                linkStrengthPrimary: 0.24,
+                linkStrengthSecondary: 0.1,
+                charge: {
+                    central: -2800,
+                    recipient: -1800,
+                    mentioned: -1050
+                },
+                radial: {
+                    recipientFactor: 0.3,
+                    mentionedFactor: 0.47,
+                    strength: 0.17
+                },
+                collision: {
+                    minCentral: 76,
+                    minRecipient: 58,
+                    minMentioned: 38,
+                    charWeightCentral: 4.5,
+                    charWeightRecipient: 4,
+                    charWeightMentioned: 3.35,
+                    padding: 22,
+                    iterations: 2
+                },
+                nodeRadius: {
+                    central: 18,
+                    recipientBase: 10,
+                    recipientCitationCap: 4,
+                    mentioned: 7
+                },
+                label: {
+                    charsCentral: 17,
+                    charsRecipient: 15,
+                    charsMentioned: 12,
+                    charsAlias: 11,
+                    linesCentral: 5,
+                    linesRecipient: 4,
+                    linesMentioned: 2,
+                    lineHeightCentral: 17,
+                    lineHeightRegular: 14,
+                    fontCentral: 15.8,
+                    fontRecipient: 13.4,
+                    fontMentioned: 11.3,
+                    fontAlias: 10.4,
+                    offsetCentral: 25,
+                    offsetRecipient: 19,
+                    offsetMentioned: 13,
+                    padX: 10,
+                    padY: 6.5
+                },
+                seed: {
+                    recipientFactor: 0.3,
+                    mentionBaseFactor: 0.45,
+                    mentionRingStepFactor: 0.08,
+                    mentionsMinPerRing: 12,
+                    ringDivisor: 3
+                },
+                labelDensity: selectedDensity,
+                printTarget
+            };
+
+            if (isPrint) {
+                profile.zoomMin = 0.62;
+                profile.zoomMax = 2.1;
+                profile.linkDistancePrimary = {
+                    diplomatic: 186,
+                    scholarly: 174,
+                    default: 180
+                };
+                profile.linkDistanceSecondary = 128;
+                profile.linkStrengthPrimary = 0.28;
+                profile.linkStrengthSecondary = 0.11;
+                profile.charge = {
+                    central: -3150,
+                    recipient: -2000,
+                    mentioned: -1200
+                };
+                profile.radial = {
+                    recipientFactor: 0.34,
+                    mentionedFactor: printTarget === 'a5' ? 0.5 : 0.48,
+                    strength: 0.2
+                };
+                profile.collision = {
+                    minCentral: 88,
+                    minRecipient: 68,
+                    minMentioned: 46,
+                    charWeightCentral: 4.1,
+                    charWeightRecipient: 3.7,
+                    charWeightMentioned: 3.15,
+                    padding: 26,
+                    iterations: 3
+                };
+                profile.nodeRadius = {
+                    central: 17,
+                    recipientBase: 9.5,
+                    recipientCitationCap: 4,
+                    mentioned: 6.5
+                };
+                profile.label = {
+                    charsCentral: printTarget === 'a5' ? 15 : 16,
+                    charsRecipient: printTarget === 'a5' ? 13 : 14,
+                    charsMentioned: printTarget === 'a5' ? 9 : 10,
+                    charsAlias: 10,
+                    linesCentral: 5,
+                    linesRecipient: 4,
+                    linesMentioned: 2,
+                    lineHeightCentral: 14.8,
+                    lineHeightRegular: 12.4,
+                    fontCentral: printTarget === 'a5' ? 12.9 : 13.6,
+                    fontRecipient: printTarget === 'a5' ? 11.2 : 11.9,
+                    fontMentioned: printTarget === 'a5' ? 9.3 : 9.9,
+                    fontAlias: 9.1,
+                    offsetCentral: 23,
+                    offsetRecipient: 16.5,
+                    offsetMentioned: 12,
+                    padX: 9,
+                    padY: 5.5
+                };
+                profile.seed = {
+                    recipientFactor: 0.35,
+                    mentionBaseFactor: printTarget === 'a5' ? 0.49 : 0.47,
+                    mentionRingStepFactor: 0.1,
+                    mentionsMinPerRing: 10,
+                    ringDivisor: 2.5
+                };
+
+                // Force print-safe readability when resolution drops.
+                if (profile.labelDensity === 'all') {
+                    profile.labelDensity = 'key';
+                }
+            }
+
+            return profile;
+        }
+
+        function getNodeRadius(node, profile) {
+            if (node.type === 'central') return profile.nodeRadius.central;
+            if (node.type === 'recipient') {
+                return profile.nodeRadius.recipientBase + Math.min(node.citations.length, profile.nodeRadius.recipientCitationCap);
+            }
+            return profile.nodeRadius.mentioned;
+        }
+
+        function wrapTextByChars(text, maxChars, maxLines, truncate = true) {
+            const words = text.trim().split(/\s+/).filter(Boolean);
+            if (words.length === 0) return [text];
+
+            const lines = [];
+            let current = "";
+            words.forEach(word => {
+                const candidate = current ? `${current} ${word}` : word;
+                if (candidate.length <= maxChars || current.length === 0) {
+                    current = candidate;
+                    return;
+                }
+                lines.push(current);
+                current = word;
+            });
+            if (current) lines.push(current);
+
+            if (lines.length <= maxLines) {
+                return lines;
+            }
+
+            const trimmed = lines.slice(0, maxLines);
+            if (!truncate) {
+                if (lines.length > maxLines) {
+                    trimmed[maxLines - 1] = `${trimmed[maxLines - 1]} ${lines.slice(maxLines).join(' ')}`;
+                }
+                return trimmed;
+            }
+
+            const last = trimmed[maxLines - 1];
+            if (!last.endsWith("...")) {
+                trimmed[maxLines - 1] = `${last.substring(0, Math.max(1, maxChars - 3))}...`;
+            }
+            return trimmed;
+        }
+
+        function getLabelLines(name, nodeType, profile) {
+            const aliasMatch = name.match(/^(.*)\s(\([^)]*\))$/);
+            const baseChars = nodeType === 'central'
+                ? profile.label.charsCentral
+                : nodeType === 'recipient'
+                    ? profile.label.charsRecipient
+                    : profile.label.charsMentioned;
+            const maxLines = nodeType === 'central'
+                ? profile.label.linesCentral
+                : nodeType === 'recipient'
+                    ? profile.label.linesRecipient
+                    : profile.label.linesMentioned;
+            const truncate = nodeType === 'mentioned';
+
+            if (!aliasMatch) {
+                return wrapTextByChars(name, baseChars, maxLines, truncate);
+            }
+
+            const properLines = wrapTextByChars(aliasMatch[1], baseChars, Math.max(1, maxLines - 1), truncate);
+            const aliasLines = wrapTextByChars(aliasMatch[2], profile.label.charsAlias, 1, truncate);
+            return [...properLines, ...aliasLines];
+        }
+
+        function getLabelOffset(node, profile) {
+            const radius = getNodeRadius(node, profile);
+            if (node.type === 'central') return -(radius + profile.label.offsetCentral);
+            if (node.type === 'recipient') return -(radius + profile.label.offsetRecipient);
+            return -(radius + profile.label.offsetMentioned);
+        }
+
+        function estimateCollisionRadius(node, profile) {
+            const lines = getLabelLines(node.name, node.type, profile);
+            const longestLine = lines.reduce((max, line) => Math.max(max, line.length), 0);
+            const charWeight = node.type === 'central'
+                ? profile.collision.charWeightCentral
+                : node.type === 'recipient'
+                    ? profile.collision.charWeightRecipient
+                    : profile.collision.charWeightMentioned;
+            const baseFont = node.type === 'central'
+                ? profile.label.fontCentral
+                : node.type === 'recipient'
+                    ? profile.label.fontRecipient
+                    : profile.label.fontMentioned;
+            const fontFactor = baseFont / 10.5;
+
+            const textWidth = longestLine * charWeight * fontFactor;
+            const lineHeight = node.type === 'central'
+                ? profile.label.lineHeightCentral
+                : profile.label.lineHeightRegular;
+            const textHeight = lines.length * lineHeight;
+            const base = node.type === 'central'
+                ? profile.collision.minCentral
+                : node.type === 'recipient'
+                    ? profile.collision.minRecipient
+                    : profile.collision.minMentioned;
+
+            return Math.max(base, (textWidth * 0.56) + (textHeight * 0.36) + profile.collision.padding);
+        }
+
+        function getVisibleLabelNodeIds(nodes, profile) {
+            const visible = new Set();
+            nodes.forEach(node => {
+                if (node.type === 'central' || node.type === 'recipient') {
+                    visible.add(node.id);
+                }
+            });
+
+            if (profile.labelDensity === 'primary') {
+                return visible;
+            }
+
+            const mentioned = nodes
+                .filter(node => node.type === 'mentioned')
+                .sort((a, b) => b.degree - a.degree || b.citations.length - a.citations.length);
+
+            if (profile.labelDensity === 'all') {
+                mentioned.forEach(node => visible.add(node.id));
+                return visible;
+            }
+
+            const maxMentionLabels = renderMode === 'print'
+                ? (profile.printTarget === 'a5' ? 8 : 10)
+                : 14;
+            mentioned
+                .filter(node => node.degree >= 2 || node.citations.length >= 2)
+                .slice(0, maxMentionLabels)
+                .forEach(node => visible.add(node.id));
+            return visible;
+        }
+
+        function getEndpointId(endpoint) {
+            return typeof endpoint === 'object' ? endpoint.id : endpoint;
+        }
+
+        function edgeKey(sourceId, targetId) {
+            return sourceId < targetId ? `${sourceId}||${targetId}` : `${targetId}||${sourceId}`;
+        }
+
+        function buildAdjacency(data) {
+            const adjacency = new Map();
+            data.nodes.forEach(node => adjacency.set(node.id, new Set()));
+            data.links.forEach(link => {
+                const sourceId = getEndpointId(link.source);
+                const targetId = getEndpointId(link.target);
+                if (!adjacency.has(sourceId) || !adjacency.has(targetId)) return;
+                adjacency.get(sourceId).add(targetId);
+                adjacency.get(targetId).add(sourceId);
+            });
+            return adjacency;
+        }
+
+        function getFocusNodeSet(data, centerNodeId, depth) {
+            if (!centerNodeId) return null;
+            const nodeExists = data.nodes.some(node => node.id === centerNodeId);
+            if (!nodeExists) return null;
+
+            const maxDepth = Number.isFinite(depth) ? depth : 1;
+            const adjacency = buildAdjacency(data);
+            const visited = new Set([centerNodeId]);
+            const queue = [{ id: centerNodeId, distance: 0 }];
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+                if (current.distance >= maxDepth) continue;
+                const neighbors = adjacency.get(current.id) || new Set();
+                neighbors.forEach(neighborId => {
+                    if (visited.has(neighborId)) return;
+                    visited.add(neighborId);
+                    queue.push({ id: neighborId, distance: current.distance + 1 });
+                });
+            }
+
+            return visited;
+        }
+
+        function getShortestPathInfo(data, fromId, toId) {
+            const emptyResult = {
+                found: false,
+                distance: null,
+                nodeIds: [],
+                edgeKeys: new Set()
+            };
+
+            if (!fromId || !toId) return emptyResult;
+            if (fromId === toId) {
+                return {
+                    found: true,
+                    distance: 0,
+                    nodeIds: [fromId],
+                    edgeKeys: new Set()
+                };
+            }
+
+            const nodeIdSet = new Set(data.nodes.map(node => node.id));
+            if (!nodeIdSet.has(fromId) || !nodeIdSet.has(toId)) return emptyResult;
+
+            const adjacency = buildAdjacency(data);
+            const queue = [fromId];
+            const visited = new Set([fromId]);
+            const previous = new Map();
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+                if (current === toId) break;
+                const neighbors = adjacency.get(current) || new Set();
+                neighbors.forEach(nextId => {
+                    if (visited.has(nextId)) return;
+                    visited.add(nextId);
+                    previous.set(nextId, current);
+                    queue.push(nextId);
+                });
+            }
+
+            if (!previous.has(toId)) return emptyResult;
+
+            const pathIds = [];
+            let cursor = toId;
+            while (cursor) {
+                pathIds.push(cursor);
+                cursor = previous.get(cursor);
+            }
+            pathIds.reverse();
+
+            const pathEdgeKeys = new Set();
+            for (let i = 0; i < pathIds.length - 1; i++) {
+                pathEdgeKeys.add(edgeKey(pathIds[i], pathIds[i + 1]));
+            }
+
+            return {
+                found: true,
+                distance: pathIds.length - 1,
+                nodeIds: pathIds,
+                edgeKeys: pathEdgeKeys
+            };
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function getSortedNodeChoices(data) {
+            const typeRank = { central: 0, recipient: 1, mentioned: 2 };
+            return data.nodes
+                .slice()
+                .sort((a, b) => {
+                    const rankDiff = (typeRank[a.type] ?? 99) - (typeRank[b.type] ?? 99);
+                    if (rankDiff !== 0) return rankDiff;
+                    return a.name.localeCompare(b.name);
+                });
+        }
+
+        function renderPathStatus(pathInfo) {
+            const statusEl = document.getElementById('path-status');
+            if (!statusEl || !latestNetworkData) return;
+
+            if (!uiState.pathFrom || !uiState.pathTo) {
+                statusEl.textContent = 'Pick two people to reveal the shortest path.';
+                return;
+            }
+
+            const nameById = new Map(latestNetworkData.nodes.map(node => [node.id, node.name]));
+            const fromName = nameById.get(uiState.pathFrom) || uiState.pathFrom;
+            const toName = nameById.get(uiState.pathTo) || uiState.pathTo;
+
+            if (!pathInfo.found) {
+                statusEl.textContent = `No path found between ${fromName} and ${toName} in the current filter.`;
+                return;
+            }
+
+            const preview = pathInfo.nodeIds
+                .map(id => nameById.get(id) || id)
+                .slice(0, 4)
+                .join(' -> ');
+            const suffix = pathInfo.nodeIds.length > 4 ? ' -> ...' : '';
+            statusEl.textContent = `Shortest path: ${pathInfo.distance} hops (${preview}${suffix}).`;
+        }
+
+        function renderEvidenceDrawer(data) {
+            const drawer = document.getElementById('evidence-drawer');
+            if (!drawer) return;
+
+            if (!uiState.selectedNodeId) {
+                drawer.innerHTML = '<p class="print-hint">Select a node in the graph to view supporting letter evidence.</p>';
+                return;
+            }
+
+            const node = data.nodes.find(item => item.id === uiState.selectedNodeId);
+            if (!node) {
+                uiState.selectedNodeId = null;
+                drawer.innerHTML = '<p class="print-hint">Selected node is outside the current temporal range.</p>';
+                return;
+            }
+
+            const citations = (node.citations || []).slice(0, 8);
+            const citationList = citations.length === 0
+                ? '<li class="evidence-item">No citations available for this node.</li>'
+                : citations.map(citation => `<li class="evidence-item">${escapeHtml(citation.citation)}</li>`).join('');
+
+            drawer.innerHTML = `
+                <h4 class="evidence-title">${escapeHtml(node.name)}</h4>
+                <p class="evidence-meta">${escapeHtml(node.type)} node · ${node.citations.length} citation(s)</p>
+                <ul class="evidence-list">${citationList}</ul>
+            `;
+        }
+
+        function syncInteractionControls(data) {
+            const focusInput = document.getElementById('focus-search');
+            const focusDepth = document.getElementById('focus-depth');
+            const nodeOptions = document.getElementById('node-options');
+            const pathFrom = document.getElementById('path-from');
+            const pathTo = document.getElementById('path-to');
+            if (!focusInput || !focusDepth || !nodeOptions || !pathFrom || !pathTo) return;
+
+            const sortedNodes = getSortedNodeChoices(data);
+            const availableIds = new Set(sortedNodes.map(node => node.id));
+            if (uiState.focusNodeId && !availableIds.has(uiState.focusNodeId)) uiState.focusNodeId = null;
+            if (uiState.pathFrom && !availableIds.has(uiState.pathFrom)) uiState.pathFrom = null;
+            if (uiState.pathTo && !availableIds.has(uiState.pathTo)) uiState.pathTo = null;
+            if (uiState.selectedNodeId && !availableIds.has(uiState.selectedNodeId)) uiState.selectedNodeId = null;
+
+            nodeOptions.innerHTML = '';
+            sortedNodes.forEach(node => {
+                const option = document.createElement('option');
+                option.value = node.name;
+                nodeOptions.appendChild(option);
+            });
+
+            const toOptionList = [new Option('Select person...', '', false, false)];
+            sortedNodes.forEach(node => toOptionList.push(new Option(node.name, node.id, false, false)));
+
+            pathFrom.innerHTML = '';
+            pathTo.innerHTML = '';
+            toOptionList.forEach(option => {
+                pathFrom.appendChild(option.cloneNode(true));
+                pathTo.appendChild(option.cloneNode(true));
+            });
+
+            if (uiState.pathFrom) pathFrom.value = uiState.pathFrom;
+            if (uiState.pathTo) pathTo.value = uiState.pathTo;
+            focusDepth.value = String(uiState.focusDepth || 1);
+            focusInput.value = uiState.focusNodeId
+                ? (sortedNodes.find(node => node.id === uiState.focusNodeId)?.name || '')
+                : '';
+        }
+
+        function resolveFocusNodeId(inputValue, data) {
+            const normalized = inputValue.trim().toLowerCase();
+            if (!normalized) return null;
+
+            const exact = data.nodes.find(node =>
+                node.name.toLowerCase() === normalized ||
+                node.id.toLowerCase() === normalized ||
+                (node.properName && node.properName.toLowerCase() === normalized)
+            );
+            if (exact) return exact.id;
+
+            const partial = data.nodes.find(node => node.name.toLowerCase().includes(normalized));
+            return partial ? partial.id : null;
+        }
+
+        function seedNodePositions(nodes, width, height, profile) {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const minSpan = Math.min(width, height);
+
+            const recipients = nodes
+                .filter(node => node.type === 'recipient')
+                .sort((a, b) => b.degree - a.degree || a.name.localeCompare(b.name));
+            const mentioned = nodes
+                .filter(node => node.type === 'mentioned')
+                .sort((a, b) => b.degree - a.degree || a.name.localeCompare(b.name));
+
+            const recipientRadius = minSpan * profile.seed.recipientFactor;
+            const mentionBaseRadius = minSpan * profile.seed.mentionBaseFactor;
+            const mentionRingStep = minSpan * profile.seed.mentionRingStepFactor;
+
+            recipients.forEach((node, index) => {
+                const angle = ((index / Math.max(recipients.length, 1)) * Math.PI * 2) - (Math.PI / 2);
+                node.x = centerX + Math.cos(angle) * recipientRadius;
+                node.y = centerY + Math.sin(angle) * recipientRadius;
+            });
+
+            const mentionsPerRing = Math.max(
+                profile.seed.mentionsMinPerRing,
+                Math.ceil(mentioned.length / profile.seed.ringDivisor)
+            );
+            mentioned.forEach((node, index) => {
+                const ring = Math.floor(index / mentionsPerRing);
+                const ringIndex = index % mentionsPerRing;
+                const angle = ((ringIndex / mentionsPerRing) * Math.PI * 2) - (Math.PI / 2);
+                const radius = mentionBaseRadius + (ring * mentionRingStep);
+                node.x = centerX + Math.cos(angle) * radius;
+                node.y = centerY + Math.sin(angle) * radius;
+            });
+        }
+
         // Create visualization
         function createVisualization(data = null) {
             if (!data) {
                 data = createNetworkData();
             }
-            
+            latestNetworkData = data;
+            syncInteractionControls(data);
+
             const container = d3.select("#network-container");
             const rect = container.node().getBoundingClientRect();
             const width = rect.width;
             const height = rect.height;
-            
-            // Clear container
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const profile = getLayoutProfile(width, height);
+            const visibleLabelNodeIds = getVisibleLabelNodeIds(data.nodes, profile);
+            const focusNodeIds = getFocusNodeSet(data, uiState.focusNodeId, uiState.focusDepth);
+            const hasFocus = Boolean(focusNodeIds && focusNodeIds.size > 0);
+            const pathInfo = getShortestPathInfo(data, uiState.pathFrom, uiState.pathTo);
+            const hasPath = pathInfo.found;
+            const pathNodeIds = new Set(pathInfo.nodeIds);
+            const pathEdgeKeys = pathInfo.edgeKeys;
+
+            renderPathStatus(pathInfo);
+            renderEvidenceDrawer(data);
+
+            function isLinkInFocus(linkData) {
+                if (!hasFocus) return true;
+                const sourceId = getEndpointId(linkData.source);
+                const targetId = getEndpointId(linkData.target);
+                return focusNodeIds.has(sourceId) && focusNodeIds.has(targetId);
+            }
+
+            function isLinkAdjacentToFocus(linkData) {
+                if (!hasFocus) return false;
+                const sourceId = getEndpointId(linkData.source);
+                const targetId = getEndpointId(linkData.target);
+                return focusNodeIds.has(sourceId) || focusNodeIds.has(targetId);
+            }
+
+            function getLinkBaseOpacity(linkData) {
+                return linkData.type === 'primary' ? 0.78 : 0.34;
+            }
+
+            function getLinkOpacity(linkData) {
+                const sourceId = getEndpointId(linkData.source);
+                const targetId = getEndpointId(linkData.target);
+                const inPath = hasPath && pathEdgeKeys.has(edgeKey(sourceId, targetId));
+
+                if (hasPath) {
+                    if (inPath) return 0.96;
+                    if (isLinkInFocus(linkData)) return 0.22;
+                    return 0.08;
+                }
+                if (hasFocus) {
+                    if (isLinkInFocus(linkData)) return getLinkBaseOpacity(linkData);
+                    if (isLinkAdjacentToFocus(linkData)) return 0.3;
+                    return 0.08;
+                }
+                return getLinkBaseOpacity(linkData);
+            }
+
+            function getNodeOpacity(nodeData) {
+                if (hasPath) {
+                    if (pathNodeIds.has(nodeData.id)) return 1;
+                    if (hasFocus && focusNodeIds.has(nodeData.id)) return 0.4;
+                    return 0.14;
+                }
+                if (hasFocus) {
+                    return focusNodeIds.has(nodeData.id) ? 1 : 0.14;
+                }
+                return 1;
+            }
+
+            function shouldRenderNodeLabel(nodeData) {
+                if (!visibleLabelNodeIds.has(nodeData.id)) return false;
+                if (hasPath) return pathNodeIds.has(nodeData.id);
+                if (hasFocus) return focusNodeIds.has(nodeData.id);
+                return true;
+            }
+
             container.selectAll("*").remove();
-            
-            // Create SVG
+            seedNodePositions(data.nodes, width, height, profile);
+
             const svg = container.append("svg")
                 .attr("width", width)
                 .attr("height", height);
-            
-            // Add zoom functionality
+
+            const g = svg.append("g");
             const zoom = d3.zoom()
-                .scaleExtent([0.1, 4])
+                .scaleExtent([profile.zoomMin, profile.zoomMax])
                 .on("zoom", function(event) {
                     g.attr("transform", event.transform);
                 });
-            
             svg.call(zoom);
-            const g = svg.append("g");
-            
-            // Create simulation with varied forces for better layout
+
+            const alcuinNode = data.nodes.find(node => node.type === 'central');
+            if (alcuinNode) {
+                alcuinNode.x = centerX;
+                alcuinNode.y = centerY;
+                alcuinNode.fx = centerX;
+                alcuinNode.fy = centerY;
+            }
+
             const simulation = d3.forceSimulation(data.nodes)
-                .force("link", d3.forceLink(data.links).id(d => d.id).distance(d => {
-                    // Different distances for primary vs secondary links
-                    if (d.type === 'primary') {
-                        if (d.category === 'Diplomatic') return 120;
-                        if (d.category === 'Ecclesiastical') return 100;
-                        if (d.category === 'Scholarly') return 90;
-                        return 100; // Personal
-                    } else {
-                        return 60; // Shorter secondary links
-                    }
-                }))
+                .force("link", d3.forceLink(data.links)
+                    .id(d => d.id)
+                    .distance(d => {
+                        if (d.type === 'primary') {
+                            if (d.category === 'Diplomatic') return profile.linkDistancePrimary.diplomatic;
+                            if (d.category === 'Scholarly') return profile.linkDistancePrimary.scholarly;
+                            return profile.linkDistancePrimary.default;
+                        }
+                        return profile.linkDistanceSecondary;
+                    })
+                    .strength(d => d.type === 'primary' ? profile.linkStrengthPrimary : profile.linkStrengthSecondary)
+                )
                 .force("charge", d3.forceManyBody().strength(d => {
-                    if (d.type === 'central') return -1500;
-                    if (d.type === 'recipient') return -800;
-                    return -400; // Weaker charge for mentioned persons
+                    if (d.type === 'central') return profile.charge.central;
+                    if (d.type === 'recipient') return profile.charge.recipient;
+                    return profile.charge.mentioned;
                 }))
-                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("radial", d3.forceRadial(d => {
+                    if (d.type === 'central') return 0;
+                    if (d.type === 'recipient') return Math.min(width, height) * profile.radial.recipientFactor;
+                    return Math.min(width, height) * profile.radial.mentionedFactor;
+                }, centerX, centerY).strength(d => d.type === 'central' ? 0 : profile.radial.strength))
+                .force("center", d3.forceCenter(centerX, centerY))
                 .force("collision", d3.forceCollide().radius(d => {
-                    if (d.type === 'central') return 35;
-                    if (d.type === 'recipient') return 25;
-                    return 15; // Smaller collision radius for mentioned persons
-                }));
-            
-            // Create links with different styling for primary vs secondary
+                    const baseRadius = getNodeRadius(d, profile) + 11;
+                    if (!visibleLabelNodeIds.has(d.id)) {
+                        return baseRadius;
+                    }
+                    return Math.max(estimateCollisionRadius(d, profile), baseRadius);
+                }).iterations(profile.collision.iterations));
+
             const link = g.append("g")
                 .attr("class", "links")
                 .selectAll("line")
                 .data(data.links)
                 .enter().append("line")
-                .attr("stroke", d => d.type === 'primary' ? categoryColors[d.category] : '#64748b')
-                .attr("stroke-width", d => d.type === 'primary' ? 1.5 : 1) // Thinner lines
-                .attr("stroke-opacity", d => d.type === 'primary' ? 0.8 : 0.4)
-                .attr("stroke-dasharray", d => d.type === 'secondary' ? "2,2" : "none"); // Dashed for secondary
-            
-            // Create nodes
+                .attr("stroke", d => {
+                    const sourceId = getEndpointId(d.source);
+                    const targetId = getEndpointId(d.target);
+                    if (hasPath && pathEdgeKeys.has(edgeKey(sourceId, targetId))) return '#ea8c5c';
+                    return d.type === 'primary' ? categoryColors[d.category] : '#5f6872';
+                })
+                .attr("stroke-width", d => {
+                    const sourceId = getEndpointId(d.source);
+                    const targetId = getEndpointId(d.target);
+                    if (hasPath && pathEdgeKeys.has(edgeKey(sourceId, targetId))) {
+                        return d.type === 'primary' ? 2.8 : 2.3;
+                    }
+                    return d.type === 'primary' ? 1.5 : 0.85;
+                })
+                .attr("stroke-opacity", d => getLinkOpacity(d))
+                .attr("stroke-dasharray", d => d.type === 'secondary' ? "2.5,2.5" : "none");
+
             const node = g.append("g")
                 .attr("class", "nodes")
                 .selectAll("g")
                 .data(data.nodes)
                 .enter().append("g")
                 .attr("class", "node-group")
+                .attr("opacity", d => getNodeOpacity(d))
                 .call(d3.drag()
                     .on("start", dragstarted)
                     .on("drag", dragged)
                     .on("end", dragended));
-            
-            // Add circles with different sizes and colors for different node types
-            node.append("circle")
+
+            const nodeCircle = node.append("circle")
                 .attr("class", "node")
-                .attr("r", d => {
-                    if (d.type === 'central') return 25;
-                    if (d.type === 'recipient') return 12 + Math.min(d.citations.length, 4);
-                    return 8; // Smaller for mentioned persons
-                })
+                .attr("r", d => getNodeRadius(d, profile))
                 .attr("fill", d => {
-                    if (d.type === 'central') return '#fbbf24'; // gold
-                    if (d.type === 'recipient') return '#60a5fa'; // blue for recipients
-                    return '#94a3b8'; // gray for mentioned persons
+                    if (d.type === 'central') return '#d56a32';
+                    if (d.type === 'recipient') return '#dfe4ea';
+                    return '#8f98a1';
                 })
                 .attr("stroke", d => {
-                    if (d.type === 'central') return '#f59e0b';
-                    if (d.type === 'recipient') return '#1e40af';
-                    return '#475569'; // darker gray stroke for mentioned
+                    if (uiState.selectedNodeId === d.id) return '#ea8c5c';
+                    if (hasPath && pathNodeIds.has(d.id)) return '#ea8c5c';
+                    if (d.type === 'central') return '#fff7f0';
+                    if (d.type === 'recipient') return '#7e8791';
+                    return '#3d434a';
                 })
-                .attr("stroke-width", d => d.type === 'central' ? 3 : 2);
-            
-            // Add labels with different styling
-            node.append("text")
-                .text(d => d.name)
-                .attr("dy", d => {
-                    if (d.type === 'central') return -30;
-                    if (d.type === 'recipient') return -18;
-                    return -12; // Closer to mentioned person nodes
-                })
-                .attr("text-anchor", "middle")
-                .attr("class", d => {
-                    if (d.type === 'central') return "text-sm font-bold fill-slate-100";
-                    if (d.type === 'recipient') return "text-xs fill-slate-200";
-                    return "text-xs fill-slate-300"; // Lighter text for mentioned persons
-                })
+                .attr("stroke-width", d => {
+                    if (uiState.selectedNodeId === d.id) return 3.4;
+                    if (hasPath && pathNodeIds.has(d.id)) return 2.8;
+                    return d.type === 'central' ? 2.4 : 1.5;
+                });
+
+            const labelNode = node.filter(d => shouldRenderNodeLabel(d));
+            const labelGroup = labelNode.append("g")
+                .attr("class", "node-label")
+                .attr("transform", d => `translate(0,${getLabelOffset(d, profile)})`)
                 .style("pointer-events", "none");
-            
-            // Add biography buttons only for central and recipient nodes
+
+            labelGroup.each(function(d) {
+                const group = d3.select(this);
+                const lines = getLabelLines(d.name, d.type, profile);
+                const baseFont = d.type === 'central'
+                    ? profile.label.fontCentral
+                    : d.type === 'recipient'
+                        ? profile.label.fontRecipient
+                        : profile.label.fontMentioned;
+                const text = group.append("text")
+                    .attr("class", `node-label-text node-label-text-${d.type}`)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", `${baseFont}px`);
+
+                const lineHeight = d.type === 'central'
+                    ? profile.label.lineHeightCentral
+                    : profile.label.lineHeightRegular;
+                lines.forEach((line, index) => {
+                    text.append("tspan")
+                        .attr("x", 0)
+                        .attr("dy", index === 0 ? 0 : lineHeight)
+                        .attr("class", line.startsWith("(") ? "node-label-alias" : null)
+                        .style("font-size", line.startsWith("(") ? `${profile.label.fontAlias}px` : `${baseFont}px`)
+                        .text(line);
+                });
+
+                const bbox = text.node().getBBox();
+                group.insert("rect", "text")
+                    .attr("class", `node-label-bg node-label-bg-${d.type}`)
+                    .attr("x", bbox.x - profile.label.padX)
+                    .attr("y", bbox.y - profile.label.padY)
+                    .attr("width", bbox.width + (profile.label.padX * 2))
+                    .attr("height", bbox.height + (profile.label.padY * 2))
+                    .attr("rx", 5)
+                    .attr("ry", 5);
+            });
+
             node.filter(d => d.type === 'central' || d.type === 'recipient')
                 .append("circle")
                 .attr("class", "bio-btn")
                 .attr("r", 6)
-                .attr("cx", d => d.type === 'central' ? 25 : 15)
-                .attr("cy", -5)
-                .attr("fill", "#475569")
-                .attr("stroke", "#64748b")
+                .attr("cx", d => getNodeRadius(d, profile) + 8)
+                .attr("cy", d => -getNodeRadius(d, profile) + 6)
+                .attr("fill", "#2f343a")
+                .attr("stroke", "#808a95")
                 .attr("stroke-width", 1)
                 .on("click", function(event, d) {
                     event.stopPropagation();
                     showBioModal(d.name);
                 });
-            
+
             node.filter(d => d.type === 'central' || d.type === 'recipient')
                 .append("text")
                 .attr("class", "bio-btn")
-                .attr("x", d => d.type === 'central' ? 25 : 15)
-                .attr("y", -2)
+                .attr("x", d => getNodeRadius(d, profile) + 8)
+                .attr("y", d => -getNodeRadius(d, profile) + 9)
                 .attr("text-anchor", "middle")
-                .attr("class", "text-xs fill-slate-200")
+                .attr("fill", "#f4f6f8")
+                .attr("font-size", "10px")
+                .attr("font-weight", "600")
                 .text("i")
                 .style("pointer-events", "none");
-            
-            // Add hover events
+
+            function applySelectedNodeVisuals() {
+                nodeCircle
+                    .attr("stroke", d => {
+                        if (uiState.selectedNodeId === d.id) return '#ea8c5c';
+                        if (hasPath && pathNodeIds.has(d.id)) return '#ea8c5c';
+                        if (d.type === 'central') return '#fff7f0';
+                        if (d.type === 'recipient') return '#7e8791';
+                        return '#3d434a';
+                    })
+                    .attr("stroke-width", d => {
+                        if (uiState.selectedNodeId === d.id) return 3.4;
+                        if (hasPath && pathNodeIds.has(d.id)) return 2.8;
+                        return d.type === 'central' ? 2.4 : 1.5;
+                    });
+            }
+
             node
                 .on("mouseover", function(event, d) {
+                    d3.select(this).raise();
                     showTooltip(event, d);
                 })
                 .on("mouseout", function() {
@@ -1009,38 +2282,39 @@
                 })
                 .on("mousemove", function(event) {
                     moveTooltip(event);
+                })
+                .on("click", function(event, d) {
+                    if (event.defaultPrevented) return;
+                    uiState.selectedNodeId = d.id;
+                    renderEvidenceDrawer(data);
+                    applySelectedNodeVisuals();
                 });
-            
-            // Update positions on tick
+
+            applySelectedNodeVisuals();
+
             simulation.on("tick", () => {
                 link
                     .attr("x1", d => d.source.x)
                     .attr("y1", d => d.source.y)
                     .attr("x2", d => d.target.x)
                     .attr("y2", d => d.target.y);
-                
+
                 node.attr("transform", d => `translate(${d.x}, ${d.y})`);
             });
-            
-            // Fix Alcuin at center
-            const alcuinNode = data.nodes.find(n => n.type === 'central');
-            if (alcuinNode) {
-                alcuinNode.fx = width / 2;
-                alcuinNode.fy = height / 2;
-            }
-            
-            // Drag functions
+
+            simulation.alpha(1).restart();
+
             function dragstarted(event, d) {
                 if (!event.active) simulation.alphaTarget(0.3).restart();
                 d.fx = d.x;
                 d.fy = d.y;
             }
-            
+
             function dragged(event, d) {
                 d.fx = event.x;
                 d.fy = event.y;
             }
-            
+
             function dragended(event, d) {
                 if (!event.active) simulation.alphaTarget(0);
                 if (d.type !== 'central') {
@@ -1151,56 +2425,142 @@
             };
         }
         
+        function getCurrentFilteredLetters() {
+            const checkbox = document.getElementById('temporal-filter');
+            const yearSlider = document.getElementById('year-slider');
+            const windowSlider = document.getElementById('window-slider');
+            const yearDisplay = document.getElementById('year-range-display');
+            const windowDisplay = document.getElementById('window-size');
+            if (!checkbox || !yearSlider || !windowSlider || !yearDisplay || !windowDisplay) {
+                return ALL_ALCUIN_LETTERS;
+            }
+
+            const startYear = Number.parseInt(yearSlider.value, 10);
+            const windowSize = Number.parseInt(windowSlider.value, 10);
+            const endYear = startYear + windowSize;
+
+            windowDisplay.textContent = windowSlider.value;
+            yearDisplay.textContent = `${startYear}-${endYear} CE`;
+
+            if (!checkbox.checked) {
+                return ALL_ALCUIN_LETTERS;
+            }
+
+            return ALL_ALCUIN_LETTERS.filter(letter =>
+                letter.year && letter.year >= startYear && letter.year <= endYear
+            );
+        }
+
+        function refreshVisualizationFromControls() {
+            const filteredLetters = getCurrentFilteredLetters();
+            const filteredData = createNetworkData(filteredLetters);
+            createVisualization(filteredData);
+        }
+
         // Temporal filter functions
         function setupTemporalControls() {
             const checkbox = document.getElementById('temporal-filter');
             const controls = document.getElementById('temporal-controls');
             const yearSlider = document.getElementById('year-slider');
             const windowSlider = document.getElementById('window-slider');
-            const yearDisplay = document.getElementById('year-range-display');
-            const windowDisplay = document.getElementById('window-size');
-            
+            if (!checkbox || !controls || !yearSlider || !windowSlider) return;
+
+            controls.classList.toggle('hidden', !checkbox.checked);
+
             checkbox.addEventListener('change', function() {
                 controls.classList.toggle('hidden', !this.checked);
-                if (this.checked) {
-                    updateTemporalFilter();
-                } else {
-                    createVisualization(); // Show all data
+                refreshVisualizationFromControls();
+            });
+            yearSlider.addEventListener('input', refreshVisualizationFromControls);
+            windowSlider.addEventListener('input', refreshVisualizationFromControls);
+        }
+
+        function setupPrintControls() {
+            const printTarget = document.getElementById('print-target');
+            const labelDensity = document.getElementById('label-density');
+            if (!printTarget) return;
+
+            document.body.dataset.printTarget = printTarget.value;
+            printTarget.addEventListener('change', function() {
+                document.body.dataset.printTarget = this.value;
+                refreshVisualizationFromControls();
+            });
+            if (labelDensity) {
+                labelDensity.addEventListener('change', refreshVisualizationFromControls);
+            }
+
+            window.addEventListener('beforeprint', function() {
+                renderMode = 'print';
+                refreshVisualizationFromControls();
+            });
+
+            window.addEventListener('afterprint', function() {
+                renderMode = 'screen';
+                refreshVisualizationFromControls();
+            });
+        }
+
+        function setupExplorationControls() {
+            const focusInput = document.getElementById('focus-search');
+            const focusDepth = document.getElementById('focus-depth');
+            const focusApply = document.getElementById('focus-apply');
+            const focusClear = document.getElementById('focus-clear');
+            const pathFrom = document.getElementById('path-from');
+            const pathTo = document.getElementById('path-to');
+            const pathShow = document.getElementById('path-show');
+            const pathClear = document.getElementById('path-clear');
+
+            if (!focusInput || !focusDepth || !focusApply || !focusClear || !pathFrom || !pathTo || !pathShow || !pathClear) {
+                return;
+            }
+
+            function applyFocusFromInput() {
+                if (!latestNetworkData) return;
+                const resolvedNodeId = resolveFocusNodeId(focusInput.value, latestNetworkData);
+                uiState.focusDepth = Number.parseInt(focusDepth.value, 10) || 1;
+                uiState.focusNodeId = resolvedNodeId;
+                refreshVisualizationFromControls();
+            }
+
+            focusApply.addEventListener('click', applyFocusFromInput);
+            focusInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    applyFocusFromInput();
                 }
             });
-            
-            yearSlider.addEventListener('input', updateTemporalFilter);
-            windowSlider.addEventListener('input', function() {
-                windowDisplay.textContent = this.value;
-                updateTemporalFilter();
+            focusDepth.addEventListener('change', function() {
+                uiState.focusDepth = Number.parseInt(this.value, 10) || 1;
+                if (uiState.focusNodeId) {
+                    refreshVisualizationFromControls();
+                }
             });
-            
-            function updateTemporalFilter() {
-                if (!checkbox.checked) return;
-                
-                const startYear = parseInt(yearSlider.value);
-                const windowSize = parseInt(windowSlider.value);
-                const endYear = startYear + windowSize;
-                
-                yearDisplay.textContent = `${startYear}-${endYear} CE`;
-                
-                // Filter letters by year range - this is the key fix!
-                const filteredLetters = ALL_ALCUIN_LETTERS.filter(letter => 
-                    letter.year && letter.year >= startYear && letter.year <= endYear
-                );
-                
-                console.log(`Filtering: ${startYear}-${endYear}, found ${filteredLetters.length} letters`);
-                
-                // Create filtered network data and visualization
-                const filteredData = createNetworkData(filteredLetters);
-                createVisualization(filteredData);
-            }
+            focusClear.addEventListener('click', function() {
+                uiState.focusNodeId = null;
+                focusInput.value = '';
+                refreshVisualizationFromControls();
+            });
+
+            pathShow.addEventListener('click', function() {
+                uiState.pathFrom = pathFrom.value || null;
+                uiState.pathTo = pathTo.value || null;
+                refreshVisualizationFromControls();
+            });
+            pathClear.addEventListener('click', function() {
+                uiState.pathFrom = null;
+                uiState.pathTo = null;
+                pathFrom.value = '';
+                pathTo.value = '';
+                refreshVisualizationFromControls();
+            });
         }
         
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            createVisualization();
             setupTemporalControls();
+            setupPrintControls();
+            setupExplorationControls();
+            refreshVisualizationFromControls();
         });
     </script>
 </body>
