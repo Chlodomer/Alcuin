@@ -49,22 +49,41 @@
             border: 1px solid rgba(171, 179, 188, 0.22);
             background: linear-gradient(180deg, rgba(36, 40, 44, 0.9), rgba(26, 29, 32, 0.92));
             border-radius: 12px;
-            padding: 1rem 1.25rem;
+            padding: 1rem 1.25rem 0.95rem;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .title-kicker {
+            margin: 0 0 0.25rem;
+            font-size: 0.73rem;
+            text-transform: uppercase;
+            letter-spacing: 0.11em;
+            color: var(--accent-400);
+            font-weight: 600;
         }
 
         .page-title {
             margin: 0;
-            font-size: clamp(1.8rem, 2.8vw, 2.5rem);
+            font-size: clamp(2rem, 3.2vw, 2.9rem);
             line-height: 1.1;
             letter-spacing: 0.02em;
             color: var(--paper-50);
         }
 
+        .title-accent {
+            color: #ffe3d3;
+            text-shadow: 0 0 22px rgba(213, 106, 50, 0.28);
+        }
+
         .page-subtitle {
-            margin: 0.3rem 0 0;
+            margin: 0.4rem 0 0;
             color: var(--concrete-200);
-            font-size: clamp(1rem, 1.6vw, 1.2rem);
+            font-size: clamp(1rem, 1.45vw, 1.18rem);
             font-weight: 500;
+            letter-spacing: 0.01em;
         }
 
         .intro-copy {
@@ -75,11 +94,137 @@
             line-height: 1.5;
         }
 
+        .header-metrics {
+            display: grid;
+            grid-auto-flow: column;
+            gap: 0.45rem;
+        }
+
+        .metric-chip {
+            border: 1px solid rgba(171, 179, 188, 0.28);
+            border-radius: 8px;
+            padding: 0.38rem 0.52rem;
+            background: rgba(17, 19, 21, 0.45);
+            min-width: 5.4rem;
+        }
+
+        .metric-value {
+            display: block;
+            color: var(--paper-50);
+            font-size: 0.97rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .metric-label {
+            display: block;
+            margin-top: 0.15rem;
+            color: var(--concrete-300);
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
         .workspace-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) clamp(230px, 15vw, 290px);
+            grid-template-columns: clamp(280px, 19vw, 360px) minmax(0, 1fr) clamp(220px, 15vw, 290px);
             gap: 0.8rem;
             align-items: start;
+        }
+
+        .details-panel {
+            border: 1px solid rgba(171, 179, 188, 0.22);
+            border-radius: 12px;
+            padding: 0.82rem;
+            background: linear-gradient(180deg, rgba(34, 38, 43, 0.95), rgba(24, 27, 31, 0.96));
+            position: sticky;
+            top: 1rem;
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+        }
+
+        .details-hint {
+            margin: 0 0 0.5rem;
+            color: var(--concrete-300);
+            font-size: 0.74rem;
+        }
+
+        .details-name {
+            margin: 0;
+            color: var(--paper-50);
+            font-size: 1.24rem;
+            line-height: 1.2;
+        }
+
+        .details-head {
+            display: flex;
+            align-items: center;
+            gap: 0.48rem;
+        }
+
+        .details-icon {
+            flex: 0 0 auto;
+            width: 1.1rem;
+            height: 1.1rem;
+            color: #c7d0d8;
+            opacity: 0.95;
+        }
+
+        .details-icon svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .details-meta {
+            margin: 0.3rem 0 0.62rem;
+            color: var(--concrete-300);
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .details-bio {
+            margin: 0;
+            color: #e1e6eb;
+            font-size: 0.83rem;
+            line-height: 1.55;
+        }
+
+        .details-source {
+            margin: 0.58rem 0 0.72rem;
+            color: var(--concrete-300);
+            font-size: 0.72rem;
+            font-style: italic;
+        }
+
+        .details-section-title {
+            margin: 0.72rem 0 0.4rem;
+            color: var(--paper-50);
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+        }
+
+        .details-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 0.42rem;
+        }
+
+        .details-item {
+            border-left: 2px solid rgba(213, 106, 50, 0.7);
+            padding-left: 0.46rem;
+            color: var(--concrete-200);
+            font-size: 0.74rem;
+            line-height: 1.4;
         }
 
         .network-panel {
@@ -299,21 +444,6 @@
             margin-bottom: 0.45rem;
         }
 
-        .tooltip {
-            position: absolute;
-            background: rgba(17, 19, 21, 0.97);
-            color: var(--paper-50);
-            padding: 0.7rem;
-            border-radius: 8px;
-            border: 1px solid rgba(171, 179, 188, 0.3);
-            pointer-events: none;
-            max-width: 400px;
-            font-size: 0.75rem;
-            line-height: 1.45;
-            z-index: 1000;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-        }
-
         .node {
             cursor: pointer;
         }
@@ -368,93 +498,41 @@
             font-weight: 600;
         }
 
-        .bio-btn {
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .node-group:hover .bio-btn {
-            opacity: 1;
-        }
-
-        .bio-modal {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            background: rgba(9, 10, 11, 0.68);
-            z-index: 1000;
-        }
-
-        .bio-card {
-            width: min(100%, 820px);
-            max-height: 82vh;
-            overflow-y: auto;
-            border-radius: 12px;
-            border: 1px solid rgba(171, 179, 188, 0.24);
-            background: linear-gradient(180deg, #24282c, #1a1d20);
-            padding: 1.1rem;
-            box-shadow: 0 14px 48px rgba(0, 0, 0, 0.45);
-        }
-
-        .bio-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 0.75rem;
-            margin-bottom: 0.8rem;
-        }
-
-        .bio-title {
-            margin: 0;
-            font-size: 1.2rem;
-            color: var(--paper-50);
-        }
-
-        .bio-close {
-            border: 1px solid rgba(171, 179, 188, 0.35);
-            background: transparent;
-            color: var(--concrete-300);
-            border-radius: 8px;
-            width: 2rem;
-            height: 2rem;
-            cursor: pointer;
-            font-size: 1.15rem;
-            line-height: 1;
-        }
-
-        .bio-close:hover {
-            color: var(--paper-50);
-            border-color: rgba(213, 106, 50, 0.45);
-        }
-
-        .bio-content {
-            color: #d9dee3;
-            font-size: 0.92rem;
-            line-height: 1.6;
-        }
-
-        .bio-source {
-            margin-top: 0.8rem;
-            color: var(--concrete-300);
-            font-size: 0.78rem;
-            font-style: italic;
-        }
 
         .hidden {
             display: none !important;
         }
 
+        @media (max-width: 1540px) {
+            .workspace-layout {
+                grid-template-columns: clamp(250px, 21vw, 320px) minmax(0, 1fr) clamp(215px, 15vw, 270px);
+            }
+
+            .header-metrics {
+                grid-auto-flow: row;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
         @media (max-width: 1120px) {
+            .page-header {
+                grid-template-columns: 1fr;
+                align-items: start;
+            }
+
+            .header-metrics {
+                grid-auto-flow: column;
+                grid-template-columns: none;
+            }
+
             .workspace-layout {
                 grid-template-columns: 1fr;
             }
 
+            .details-panel,
             .control-panel {
                 position: static;
+                max-height: none;
             }
 
             .network-panel {
@@ -479,6 +557,7 @@
             }
 
             .page-header,
+            .details-panel,
             .control-panel,
             .network-panel {
                 border-color: #9ba3ab;
@@ -493,6 +572,9 @@
 
             .page-subtitle,
             .intro-copy,
+            .details-hint,
+            .details-meta,
+            .details-source,
             .muted-label,
             .year-edge-row,
             .window-row {
@@ -503,6 +585,10 @@
                 grid-template-columns: minmax(0, 1fr) 2.15in;
                 gap: 0.18in;
                 align-items: start;
+            }
+
+            .details-panel {
+                display: none;
             }
 
             body[data-print-target="book6x9"] .workspace-layout {
@@ -552,14 +638,37 @@
 <body>
     <div class="app-shell">
         <header class="page-header">
-            <h1 class="page-title">Alcuin of York</h1>
-            <h2 class="page-subtitle">Letters Network Visualization (c. 787-804 CE)</h2>
-            <p class="intro-copy">
-                Explore the correspondence network. <strong>Hover</strong> over nodes, use the <strong>[i]</strong> marker for biographies, and <strong>drag</strong> to refine layout.
-            </p>
+            <div>
+                <p class="title-kicker">Carolingian Correspondence Atlas</p>
+                <h1 class="page-title">Alcuin of York <span class="title-accent">Letters Network</span></h1>
+                <h2 class="page-subtitle">Interactive map of correspondents, mentions, and intellectual ties (c. 787-804 CE)</h2>
+                <p class="intro-copy">
+                    <strong>Hover</strong> nodes to inspect the detailed dossier on the left, <strong>click</strong> to pin a person, and use the right panel for search, paths, and filters.
+                </p>
+            </div>
+            <div class="header-metrics" aria-hidden="true">
+                <div class="metric-chip">
+                    <span class="metric-value">50+</span>
+                    <span class="metric-label">Letters</span>
+                </div>
+                <div class="metric-chip">
+                    <span class="metric-value">3</span>
+                    <span class="metric-label">Node Types</span>
+                </div>
+                <div class="metric-chip">
+                    <span class="metric-value">4</span>
+                    <span class="metric-label">Categories</span>
+                </div>
+            </div>
         </header>
 
         <main class="workspace-layout">
+            <aside class="details-panel" aria-label="Person detail panel">
+                <div id="detail-panel">
+                    <p class="details-hint">Hover or click a node to load a richer biography and citations here.</p>
+                </div>
+            </aside>
+
             <div id="network-container" class="network-panel"></div>
 
             <aside class="control-panel" aria-label="Visualization controls">
@@ -708,19 +817,6 @@
                 </section>
             </aside>
         </main>
-
-        <div id="bio-modal" class="bio-modal hidden">
-            <div class="bio-card">
-                <div class="bio-header">
-                    <h3 id="bio-title" class="bio-title"></h3>
-                    <button onclick="closeBioModal()" class="bio-close" aria-label="Close biography">×</button>
-                </div>
-                <div id="bio-content" class="bio-content"></div>
-                <div id="bio-source" class="bio-source"></div>
-            </div>
-        </div>
-
-        <div id="tooltip" class="tooltip hidden"></div>
     </div>
 
     <script>
@@ -1337,7 +1433,8 @@
             focusDepth: 1,
             pathFrom: null,
             pathTo: null,
-            selectedNodeId: null
+            selectedNodeId: null,
+            lastDetailNodeId: null
         };
         
         // Create network data with secondary connections and alias consolidation
@@ -1906,6 +2003,103 @@
             `;
         }
 
+        function getDetailIconType(node) {
+            const normalizedName = consolidateName(node.properName || node.id);
+            const lowerName = normalizedName.toLowerCase();
+            const personTitlePattern = /^(king|pope|saint|st\.)\b/;
+            const churchPattern = /\b(community|clergy|monastery|abbey|cathedral|church|minster|friary|priory)\b/;
+            const knownChurchEntities = new Set([
+                'Jarrow Community',
+                'Wearmouth-Jarrow Community',
+                'York Clergy',
+                'Lindisfarne Community',
+                'St. Peter\'s Community',
+                'Tours Community'
+            ]);
+
+            if (knownChurchEntities.has(normalizedName) || churchPattern.test(lowerName)) {
+                return 'church';
+            }
+            if (node.type === 'central' || node.type === 'recipient' || personTitlePattern.test(lowerName)) {
+                return 'person';
+            }
+            return 'person';
+        }
+
+        function getDetailIconMarkup(iconType) {
+            if (iconType === 'church') {
+                return `
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M4 20h16" />
+                        <path d="M6 20V9.5l6-4 6 4V20" />
+                        <path d="M12 5.5V3.5" />
+                        <path d="M11 4.5h2" />
+                        <path d="M10 20v-4h4v4" />
+                        <path d="M9 12h.01" />
+                        <path d="M15 12h.01" />
+                    </svg>
+                `;
+            }
+
+            return `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="8" r="3.2" />
+                    <path d="M5.5 20c.7-3.6 3.5-5.8 6.5-5.8s5.8 2.2 6.5 5.8" />
+                    <path d="M8.4 6.8c.7-1.5 2-2.5 3.6-2.8" />
+                </svg>
+            `;
+        }
+
+        function renderDetailPanel(data, preferredNodeId = null, mode = 'explore') {
+            const panel = document.getElementById('detail-panel');
+            if (!panel || !data || !data.nodes || data.nodes.length === 0) return;
+
+            let node = null;
+            if (preferredNodeId) {
+                node = data.nodes.find(item => item.id === preferredNodeId) || null;
+            }
+            if (!node && uiState.selectedNodeId) {
+                node = data.nodes.find(item => item.id === uiState.selectedNodeId) || null;
+            }
+            if (!node && uiState.lastDetailNodeId) {
+                node = data.nodes.find(item => item.id === uiState.lastDetailNodeId) || null;
+            }
+            if (!node && uiState.focusNodeId) {
+                node = data.nodes.find(item => item.id === uiState.focusNodeId) || null;
+            }
+            if (!node) {
+                node = data.nodes.find(item => item.type === 'central') || data.nodes[0];
+            }
+            uiState.lastDetailNodeId = node.id;
+
+            const properName = consolidateName(node.properName || node.id);
+            const biography = getBiography(properName);
+            const iconType = getDetailIconType(node);
+            const iconMarkup = getDetailIconMarkup(iconType);
+            const citations = (node.citations || []).slice(0, 12);
+            const citationList = citations.length === 0
+                ? '<li class="details-item">No citation snippets available.</li>'
+                : citations.map(citation => `<li class="details-item">${escapeHtml(citation.citation)}</li>`).join('');
+            const contextLabel = mode === 'pinned'
+                ? 'Pinned selection'
+                : mode === 'hover'
+                    ? 'Hover preview'
+                    : 'Active context';
+
+            panel.innerHTML = `
+                <p class="details-hint">${contextLabel}</p>
+                <div class="details-head">
+                    <span class="details-icon details-icon-${iconType}" aria-hidden="true">${iconMarkup}</span>
+                    <h3 class="details-name">${escapeHtml(node.name)}</h3>
+                </div>
+                <p class="details-meta">${escapeHtml(node.type)} node · degree ${node.degree} · ${node.citations.length} citation(s)</p>
+                <p class="details-bio">${escapeHtml(biography.content)}</p>
+                <p class="details-source">${escapeHtml(biography.source)}</p>
+                <h4 class="details-section-title">Letter Evidence</h4>
+                <ul class="details-list">${citationList}</ul>
+            `;
+        }
+
         function syncInteractionControls(data) {
             const focusInput = document.getElementById('focus-search');
             const focusDepth = document.getElementById('focus-depth');
@@ -1920,6 +2114,7 @@
             if (uiState.pathFrom && !availableIds.has(uiState.pathFrom)) uiState.pathFrom = null;
             if (uiState.pathTo && !availableIds.has(uiState.pathTo)) uiState.pathTo = null;
             if (uiState.selectedNodeId && !availableIds.has(uiState.selectedNodeId)) uiState.selectedNodeId = null;
+            if (uiState.lastDetailNodeId && !availableIds.has(uiState.lastDetailNodeId)) uiState.lastDetailNodeId = null;
 
             nodeOptions.innerHTML = '';
             sortedNodes.forEach(node => {
@@ -2022,6 +2217,7 @@
 
             renderPathStatus(pathInfo);
             renderEvidenceDrawer(data);
+            renderDetailPanel(data, uiState.selectedNodeId || uiState.lastDetailNodeId || uiState.focusNodeId);
 
             function isLinkInFocus(linkData) {
                 if (!hasFocus) return true;
@@ -2192,7 +2388,8 @@
             const labelGroup = labelNode.append("g")
                 .attr("class", "node-label")
                 .attr("transform", d => `translate(0,${getLabelOffset(d, profile)})`)
-                .style("pointer-events", "none");
+                .style("pointer-events", "auto")
+                .style("cursor", "pointer");
 
             labelGroup.each(function(d) {
                 const group = d3.select(this);
@@ -2230,32 +2427,6 @@
                     .attr("ry", 5);
             });
 
-            node.filter(d => d.type === 'central' || d.type === 'recipient')
-                .append("circle")
-                .attr("class", "bio-btn")
-                .attr("r", 6)
-                .attr("cx", d => getNodeRadius(d, profile) + 8)
-                .attr("cy", d => -getNodeRadius(d, profile) + 6)
-                .attr("fill", "#2f343a")
-                .attr("stroke", "#808a95")
-                .attr("stroke-width", 1)
-                .on("click", function(event, d) {
-                    event.stopPropagation();
-                    showBioModal(d.name);
-                });
-
-            node.filter(d => d.type === 'central' || d.type === 'recipient')
-                .append("text")
-                .attr("class", "bio-btn")
-                .attr("x", d => getNodeRadius(d, profile) + 8)
-                .attr("y", d => -getNodeRadius(d, profile) + 9)
-                .attr("text-anchor", "middle")
-                .attr("fill", "#f4f6f8")
-                .attr("font-size", "10px")
-                .attr("font-weight", "600")
-                .text("i")
-                .style("pointer-events", "none");
-
             function applySelectedNodeVisuals() {
                 nodeCircle
                     .attr("stroke", d => {
@@ -2275,18 +2446,23 @@
             node
                 .on("mouseover", function(event, d) {
                     d3.select(this).raise();
-                    showTooltip(event, d);
+                    uiState.lastDetailNodeId = d.id;
+                    renderDetailPanel(data, d.id, 'hover');
                 })
                 .on("mouseout", function() {
-                    hideTooltip();
-                })
-                .on("mousemove", function(event) {
-                    moveTooltip(event);
+                    if (uiState.selectedNodeId) {
+                        renderDetailPanel(data, uiState.selectedNodeId, 'pinned');
+                    } else if (uiState.lastDetailNodeId) {
+                        renderDetailPanel(data, uiState.lastDetailNodeId, 'hover');
+                    } else {
+                        renderDetailPanel(data, uiState.focusNodeId, 'explore');
+                    }
                 })
                 .on("click", function(event, d) {
-                    if (event.defaultPrevented) return;
                     uiState.selectedNodeId = d.id;
+                    uiState.lastDetailNodeId = d.id;
                     renderEvidenceDrawer(data);
+                    renderDetailPanel(data, d.id, 'pinned');
                     applySelectedNodeVisuals();
                 });
 
@@ -2322,52 +2498,6 @@
                     d.fy = null;
                 }
             }
-        }
-        
-        // Tooltip functions
-        function showTooltip(event, d) {
-            const tooltip = d3.select("#tooltip");
-            let content = `<strong>${d.name}</strong><br><br>`;
-            
-            if (d.citations && d.citations.length > 0) {
-                content += '<strong>Letters:</strong><br>';
-                d.citations.forEach(citation => {
-                    content += `• ${citation.citation}<br>`;
-                });
-            } else {
-                content += 'Central figure in the correspondence network.';
-            }
-            
-            tooltip
-                .html(content)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 10) + "px")
-                .classed("hidden", false);
-        }
-        
-        function hideTooltip() {
-            d3.select("#tooltip").classed("hidden", true);
-        }
-        
-        function moveTooltip(event) {
-            d3.select("#tooltip")
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 10) + "px");
-        }
-        
-        // Biography modal functions
-        function showBioModal(personName) {
-            // Use the proper name for biography lookup, but display the full name with alias
-            const properName = consolidateName(personName);
-            const bio = getBiography(properName);
-            document.getElementById('bio-title').textContent = personName; // Display name with alias
-            document.getElementById('bio-content').textContent = bio.content;
-            document.getElementById('bio-source').textContent = bio.source;
-            document.getElementById('bio-modal').classList.remove('hidden');
-        }
-        
-        function closeBioModal() {
-            document.getElementById('bio-modal').classList.add('hidden');
         }
         
         // Biography data
@@ -2416,12 +2546,240 @@
                 'Pope Leo III': {
                     content: 'Pope Leo III (750-816) was Pope from 795 to 816. He is best known for crowning Charlemagne as Holy Roman Emperor on Christmas Day 800, establishing the precedent for papal coronation of emperors.',
                     source: 'Source: Liber Pontificalis (9th century)'
+                },
+                'Jarrow Community': {
+                    content: 'This label refers to the monastic community at St Paul\'s, Jarrow, one half of the Wearmouth-Jarrow twin monastery in Northumbria. Founded in 681 under Benedict Biscop and Ceolfrith, it became a major center of learning associated with Bede in the late 7th and 8th centuries.',
+                    source: 'Source: English Heritage, "History of St Paul\'s Monastery, Jarrow"'
+                },
+                'Wearmouth-Jarrow Community': {
+                    content: 'This refers to the twin Benedictine houses of St Peter\'s Wearmouth and St Paul\'s Jarrow. Contemporary and modern histories treat the pair as one of the most influential scholarly centers in early medieval England.',
+                    source: 'Source: English Heritage, "History of St Paul\'s Monastery, Jarrow"'
+                },
+                'York Clergy': {
+                    content: 'This label likely denotes clergy attached to York\'s cathedral church in Alcuin\'s era. York was a major ecclesiastical and educational center, with a cathedral school and library linked to Archbishop Ecgbert and to Alcuin\'s own formation.',
+                    source: 'Source: Britannica, "York Minster"; historical summaries on Ecgbert of York'
+                },
+                'A Disciple': {
+                    content: 'This appears to be an unnamed disciple referenced in the correspondence tradition rather than an individually identified historical figure.',
+                    source: 'Source: Alcuin letter label in current dataset.'
+                },
+                'Adoptianists': {
+                    content: 'The Adoptianists were proponents of Adoptionism in late eighth-century Iberia, associated above all with Elipandus of Toledo and Felix of Urgell. Their doctrine was condemned in Carolingian councils, especially Frankfurt (794).',
+                    source: 'Source: Council of Frankfurt (794) context; standard histories of the Adoptionist controversy.'
+                },
+                'Aethelhard': {
+                    content: 'Aethelhard (Æthelhard, died 805) served as Archbishop of Canterbury and was an important English ecclesiastical figure in Alcuin\'s lifetime. He was temporarily displaced during Mercian political pressure and later restored.',
+                    source: 'Source: Britannica, "Aethelheard (archbishop of Canterbury)".'
+                },
+                'Agin': {
+                    content: 'This label likely refers to a Carolingian ecclesiastic named Agin or Agius in Alcuin\'s network, but the exact identification is uncertain from the present dataset alone.',
+                    source: 'Source: Alcuin letter tradition; identification remains uncertain.'
+                },
+                'An Archbishop': {
+                    content: 'This is an anonymous archiepiscopal placeholder rather than a securely identified individual.',
+                    source: 'Source: Node label in current letter dataset.'
+                },
+                'Apostles': {
+                    content: 'This collective label refers to the apostles of early Christianity, frequently invoked in Carolingian devotional and rhetorical language.',
+                    source: 'Source: Christian scriptural and liturgical tradition.'
+                },
+                'Avars': {
+                    content: 'The Avars were a major steppe polity in the Carpathian Basin. They were central to late eighth-century Carolingian military campaigns and missionary efforts.',
+                    source: 'Source: Encyclopaedia Britannica, "Avar".'
+                },
+                'Benedict Biscop': {
+                    content: 'Benedict Biscop (c. 628-690) was an Anglo-Saxon abbot who founded the twin monasteries of Wearmouth and Jarrow, foundational institutions for Northumbrian scholarship.',
+                    source: 'Source: Encyclopaedia Britannica and English Heritage materials on Wearmouth-Jarrow.'
+                },
+                'Beornuin': {
+                    content: 'The exact historical identification of Beornuin in this dataset is uncertain; the name likely refers to an Anglo-Saxon cleric within Alcuin\'s English correspondence world.',
+                    source: 'Source: Alcuin letter label; identification unresolved.'
+                },
+                'Canisius': {
+                    content: 'This likely points to Petrus Canisius, the sixteenth-century Jesuit scholar and editor, indicating a later editorial reference rather than a Carolingian-era correspondent.',
+                    source: 'Source: Early modern editorial traditions attached to medieval texts.'
+                },
+                'Caroloman': {
+                    content: 'Caroloman (Karloman) is a dynastic Carolingian name; in this context it likely denotes a Carolingian princely reference rather than an active correspondent of Alcuin.',
+                    source: 'Source: Carolingian prosopographical tradition.'
+                },
+                'Colcu of Scotland': {
+                    content: 'Colcu of Scotland refers to Colcu ua Duinechda of Clonmacnoise, a prominent Irish scholar and abbot known in correspondence with Alcuin. In Latin sources, "Scotia" can denote Ireland.',
+                    source: 'Source: Standard studies of Alcuin\'s Irish correspondents and medieval "Scotia" usage.'
+                },
+                'Cudrad': {
+                    content: 'Cudrad appears as a named recipient in the correspondence, but a secure modern identification is uncertain in this dataset.',
+                    source: 'Source: Alcuin letter label; no clear biographical consensus.'
+                },
+                'Eanbald': {
+                    content: 'Eanbald was Archbishop of York in the late eighth century and part of the Northumbrian ecclesiastical leadership with which Alcuin maintained ties.',
+                    source: 'Source: Prosopography of Anglo-Saxon England (PASE); York ecclesiastical history.'
+                },
+                'Egfrid': {
+                    content: 'Egfrid (Ecgfrith of Mercia) was the son and short-lived successor of King Offa in 796, reigning only briefly before his death.',
+                    source: 'Source: Encyclopaedia Britannica and Anglo-Saxon royal chronology.'
+                },
+                'England': {
+                    content: 'This node denotes England as a geographical and political sphere in which Alcuin\'s Northumbrian and Mercian correspondents were embedded.',
+                    source: 'Source: General historical-geographical reference.'
+                },
+                'Felix Hildebaldus': {
+                    content: 'This compound label appears to conflate names (Felix and Hildebald) and is likely an editorial or textual artifact rather than a single clearly identified individual.',
+                    source: 'Source: Dataset label form; no secure standalone identification.'
+                },
+                'Felix of Urgell': {
+                    content: 'Felix of Urgell (died c. 818) was bishop of Urgell and a principal figure in the Adoptionist controversy contested by Alcuin and Carolingian theologians.',
+                    source: 'Source: Encyclopaedia Britannica, "Felix of Urgel".'
+                },
+                'Frankfurt Council': {
+                    content: 'The Frankfurt Council (794), convened by Charlemagne, addressed major doctrinal and political matters including the condemnation of Adoptionism.',
+                    source: 'Source: Conciliar history of the Council of Frankfurt (794).'
+                },
+                'Hildegard': {
+                    content: 'Hildegard of the Vinzgau (c. 758-783) was Charlemagne\'s queen and mother of several Carolingian royal children, including Pippin of Italy.',
+                    source: 'Source: Encyclopaedia Britannica and Carolingian court history.'
+                },
+                'Huns': {
+                    content: 'In Carolingian-era usage, "Huns" can function as a classical or rhetorical ethnonym and may overlap with references to steppe enemies such as the Avars.',
+                    source: 'Source: Early medieval ethnonym usage in Latin historical writing.'
+                },
+                'Hygbald': {
+                    content: 'Hygbald (Higbald) was bishop of Lindisfarne during the period around the Viking raid of 793 and appears in Alcuin\'s Northumbrian correspondence.',
+                    source: 'Source: Prosopography of Anglo-Saxon England; Lindisfarne historical records.'
+                },
+                'Ingulf': {
+                    content: 'Ingulf appears in the correspondence network, but a secure biographical identification is uncertain in the current dataset.',
+                    source: 'Source: Alcuin letter label; identification unresolved.'
+                },
+                'Itherius': {
+                    content: 'Itherius appears as a named recipient in this corpus, but the precise historical identity remains uncertain without further manuscript-level disambiguation.',
+                    source: 'Source: Alcuin letter label; identification unresolved.'
+                },
+                'Joan Franc. Madrisius': {
+                    content: 'This label is likely an editorial-era personal name abbreviation rather than a Carolingian correspondent.',
+                    source: 'Source: Later printed editorial naming conventions in medieval text transmission.'
+                },
+                'King Æthelred of Northumbria': {
+                    content: 'King Æthelred I of Northumbria (died 796) was a Northumbrian ruler during Alcuin\'s lifetime and a frequent figure in late eighth-century Northumbrian political turbulence.',
+                    source: 'Source: Encyclopaedia Britannica, "Aethelred I (king of Northumbria)".'
+                },
+                'King Coenwulf of Mercia': {
+                    content: 'Coenwulf (reigned 796-821) succeeded Offa as king of Mercia and was one of the major Anglo-Saxon rulers corresponding with continental churchmen.',
+                    source: 'Source: Encyclopaedia Britannica, "Coenwulf".'
+                },
+                'King Eardwulf': {
+                    content: 'Eardwulf was king of Northumbria (from 796, with interruptions) and appears in the political context of Alcuin\'s late Northumbrian correspondence.',
+                    source: 'Source: Anglo-Saxon royal chronology and Northumbrian historical records.'
+                },
+                'King Offa of Mercia': {
+                    content: 'Offa of Mercia (reigned 757-796) was the most powerful Anglo-Saxon king of his generation and maintained diplomatic and ecclesiastical links with the Carolingian world.',
+                    source: 'Source: Encyclopaedia Britannica, "Offa (king of Mercia)".'
+                },
+                'King Pippin': {
+                    content: 'King Pippin here refers to Pippin of Italy (Pepin), Charlemagne\'s son, who ruled the Lombard kingdom from 781 to 810.',
+                    source: 'Source: Carolingian royal history; Britannica entries on Pepin/Pippin.'
+                },
+                'Laidrad': {
+                    content: 'Laidrad (Leidrad, died 816/817) was Archbishop of Lyon and a notable Carolingian reform bishop active under Charlemagne.',
+                    source: 'Source: Encyclopaedia Britannica, "Leidrad".'
+                },
+                'Lindisfarne': {
+                    content: 'Lindisfarne is the Northumbrian island monastery (Holy Island) central to early medieval English Christianity and famous for the Viking raid of 793.',
+                    source: 'Source: Lindisfarne historical records and English ecclesiastical history.'
+                },
+                'Lindisfarne Community': {
+                    content: 'This denotes the monastic community of Lindisfarne, one of Northumbria\'s most important ecclesiastical houses in Alcuin\'s era.',
+                    source: 'Source: Lindisfarne monastic history and Alcuin\'s post-793 correspondence.'
+                },
+                'Liutgard': {
+                    content: 'Liutgard (Luitgard) was Charlemagne\'s later queen consort, married in 794 and present in the late Carolingian court circle.',
+                    source: 'Source: Carolingian court prosopography.'
+                },
+                'Mabillon': {
+                    content: 'This likely refers to Jean Mabillon (1632-1707), the Maurist Benedictine scholar and editor, indicating a later editorial reference rather than an eighth-century participant.',
+                    source: 'Source: Histories of medieval diplomatics and monastic scholarship.'
+                },
+                'Mainz': {
+                    content: 'Mainz was a major Carolingian ecclesiastical center and archiepiscopal see, associated in this network with Riculf and broader imperial church governance.',
+                    source: 'Source: Historical studies of the archbishopric of Mainz.'
+                },
+                'Northumbrians': {
+                    content: 'This collective label refers to people of the kingdom of Northumbria, central to Alcuin\'s early background and many of his English political concerns.',
+                    source: 'Source: Anglo-Saxon and Northumbrian historical context.'
+                },
+                'Osbald': {
+                    content: 'Osbald was a briefly reigning king of Northumbria in 796, during a period of rapid political turnover addressed in Alcuin\'s letters.',
+                    source: 'Source: Northumbrian regnal lists and Anglo-Saxon chronicles.'
+                },
+                'Palace': {
+                    content: 'In this context, "Palace" refers to the Carolingian royal court environment (especially Aachen) where Alcuin worked within Charlemagne\'s intellectual circle.',
+                    source: 'Source: Histories of the Carolingian court and palace school.'
+                },
+                'Romans': {
+                    content: 'This collective label denotes Romans or Roman church circles in relation to papal and imperial affairs that appear in Alcuin\'s correspondence.',
+                    source: 'Source: Carolingian-papal political context.'
+                },
+                'Saint Cuthbert': {
+                    content: 'Saint Cuthbert (c. 634-687) was a major Northumbrian saint associated with Lindisfarne, central to regional identity in Alcuin\'s letters.',
+                    source: 'Source: Encyclopaedia Britannica and Northumbrian hagiographic tradition.'
+                },
+                'Saint Martin': {
+                    content: 'Saint Martin refers to Martin of Tours (died 397), whose cult and shrine at Tours were central to the monastic community where Alcuin later served as abbot.',
+                    source: 'Source: Historical accounts of Martin of Tours and Saint-Martin of Tours.'
+                },
+                'Saint Paul': {
+                    content: 'Saint Paul is Paul the Apostle, frequently invoked in Carolingian theological language and in dedications such as St Paul\'s at Jarrow.',
+                    source: 'Source: Christian scriptural and ecclesiastical tradition.'
+                },
+                'Saint Peter': {
+                    content: 'Saint Peter is Peter the Apostle, foundational figure in Latin Christianity and a common dedication in monasteries, churches, and papal rhetoric.',
+                    source: 'Source: Christian scriptural and ecclesiastical tradition.'
+                },
+                'Simeon of Durham': {
+                    content: 'Simeon of Durham was a twelfth-century monk and chronicler, so this label likely reflects later textual transmission or annotation rather than a contemporary correspondent of Alcuin.',
+                    source: 'Source: Medieval historiography on Simeon of Durham.'
+                },
+                'Spaniards': {
+                    content: 'This collective label refers to peoples of the Iberian world; in Alcuin\'s context it often intersects with theological disputes involving Spanish clergy.',
+                    source: 'Source: Carolingian-era references to Iberian ecclesiastical affairs.'
+                },
+                'St. Peter\'s Community': {
+                    content: 'This denotes a monastic or ecclesial community dedicated to Saint Peter, likely linked to the Northumbrian institutional world reflected in the letters.',
+                    source: 'Source: Dataset context and Northumbrian monastic dedications.'
+                },
+                'Theophilus': {
+                    content: 'Theophilus appears as a named recipient in this corpus, but the precise historical identity is uncertain without additional manuscript disambiguation.',
+                    source: 'Source: Alcuin letter label; identification unresolved.'
+                },
+                'Theophylact': {
+                    content: 'Theophylact appears as a named figure in this correspondence context, but exact identification remains uncertain in the current dataset.',
+                    source: 'Source: Alcuin letter label; identification unresolved.'
+                },
+                'Tours Community': {
+                    content: 'This refers to the monastic community at Tours, especially Saint-Martin, where Alcuin spent his final years as abbot and educational reformer.',
+                    source: 'Source: Histories of Alcuin at Tours and the Abbey of Saint-Martin.'
+                },
+                'Usserius': {
+                    content: 'This likely refers to James Ussher (Usserius), the seventeenth-century archbishop and scholar, indicating a later editorial or historiographical reference.',
+                    source: 'Source: Early modern scholarly transmission of medieval texts.'
+                },
+                'Usuald': {
+                    content: 'Usuald appears as a recipient label in this corpus, but no secure biographical identification is available from the present dataset.',
+                    source: 'Source: Alcuin letter label; identification unresolved.'
+                },
+                'Witto': {
+                    content: 'Witto (Wizo/Candidus) was a Carolingian cleric in Alcuin\'s wider milieu, remembered in sources tied to monastic reform and missionary activity.',
+                    source: 'Source: Carolingian prosopographical tradition.'
+                },
+                'York Associates': {
+                    content: 'This collective label denotes Alcuin\'s broader York circle, including clerics and scholars connected to York\'s cathedral school and ecclesiastical administration.',
+                    source: 'Source: Histories of the York school and Alcuin\'s Northumbrian network.'
                 }
             };
             
             return biographies[personName] || {
-                content: `${personName} was a significant figure in Alcuin's correspondence network during the Carolingian period. This person appears in Alcuin's letters as part of the intellectual, religious, or political circles of the time.`,
-                source: 'Source: Alcuin\'s correspondence'
+                content: 'Nothing is known about this individual apart from this title.',
+                source: 'Source: No concrete biographical evidence in the current dataset.'
             };
         }
         
