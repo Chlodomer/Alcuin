@@ -1343,6 +1343,7 @@
             if (name === 'Lucia') return 'Gisela (sister)';
             if (name === 'Eulalia') return 'Gondrade';
             if (name === 'Columba') return 'Rotrude';
+            if (name === 'Jarrow Community' || name === 'Wearmouth Jarrow Community') return 'Wearmouth-Jarrow Community';
             
             // Historical figure exact matches - prevent duplicates
             if (name === 'King Offa') return 'King Offa of Mercia';
@@ -1373,6 +1374,8 @@
             if (nameLower.includes('æthelred') && nameLower.includes('king')) return 'King Æthelred of Northumbria';
             if (nameLower.includes('coenwulf') && nameLower.includes('king')) return 'King Coenwulf of Mercia';
             if (nameLower.includes('eardwulf') && nameLower.includes('king')) return 'King Eardwulf';
+            if (nameLower.includes('wearmouth') && nameLower.includes('jarrow')) return 'Wearmouth-Jarrow Community';
+            if (nameLower === 'jarrow community') return 'Wearmouth-Jarrow Community';
             
             return name; // Return original if no match
         }
@@ -1457,6 +1460,7 @@
                 // Consolidate recipient name to proper form
                 const recipientProper = consolidateName(letter.recipient);
                 const recipientDisplay = getDisplayName(recipientProper);
+                const recipientOriginal = letter.recipient;
                 
                 // Add recipient node if not exists
                 if (!nodes.has(recipientProper)) {
@@ -1474,7 +1478,7 @@
                 nodes.get(recipientProper).citations.push({
                     letterNumber: letter.number,
                     year: letter.year,
-                    citation: `Letter ${letter.number} (${letter.year || 'c. 790s'}): "${letter.content.substring(0, 100)}..."`
+                    citation: `Letter ${letter.number} (${letter.year || 'c. 790s'}) to ${recipientOriginal}: "${letter.content.substring(0, 100)}..."`
                 });
                 
                 // Add primary link from Alcuin to recipient
@@ -1491,12 +1495,11 @@
                     letter.mentions.forEach(mention => {
                         // Consolidate mentioned person name
                         const mentionProper = consolidateName(mention);
-                        const mentionDisplay = getDisplayName(mentionProper);
                         
                         if (!nodes.has(mentionProper)) {
                             nodes.set(mentionProper, {
                                 id: mentionProper,
-                                name: mentionDisplay,
+                                name: getDisplayName(mentionProper),
                                 properName: mentionProper,
                                 type: 'mentioned',
                                 citations: [],
@@ -1508,7 +1511,7 @@
                         nodes.get(mentionProper).citations.push({
                             letterNumber: letter.number,
                             year: letter.year,
-                            citation: `Mentioned in Letter ${letter.number} (${letter.year || 'c. 790s'}) to ${recipientDisplay}`
+                            citation: `Mentioned in Letter ${letter.number} (${letter.year || 'c. 790s'}) to ${recipientOriginal}`
                         });
                         
                         // Add secondary link from recipient to mentioned person
