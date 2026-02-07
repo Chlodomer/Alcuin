@@ -1349,9 +1349,11 @@
             if (name === 'King Offa') return 'King Offa of Mercia';
             if (name === 'King Æthelred') return 'King Æthelred of Northumbria';
             if (name === 'King Coenwulf') return 'King Coenwulf of Mercia';
+            if (name === 'King Pippin') return 'Pippin';
             if (name === 'Pippin' && !name.includes('King')) return 'Pippin';
             if (name === 'Pope Adrian') return 'Pope Adrian I';
             if (name === 'Pope Leo') return 'Pope Leo III';
+            if (name === 'Lindisfarne') return 'Lindisfarne Community';
             
             // Direct lookup in reverse mapping
             if (ALIAS_TO_PROPER[name]) return ALIAS_TO_PROPER[name];
@@ -1374,8 +1376,10 @@
             if (nameLower.includes('æthelred') && nameLower.includes('king')) return 'King Æthelred of Northumbria';
             if (nameLower.includes('coenwulf') && nameLower.includes('king')) return 'King Coenwulf of Mercia';
             if (nameLower.includes('eardwulf') && nameLower.includes('king')) return 'King Eardwulf';
+            if (nameLower === 'king pippin') return 'Pippin';
             if (nameLower.includes('wearmouth') && nameLower.includes('jarrow')) return 'Wearmouth-Jarrow Community';
             if (nameLower === 'jarrow community') return 'Wearmouth-Jarrow Community';
+            if (nameLower === 'lindisfarne') return 'Lindisfarne Community';
             
             return name; // Return original if no match
         }
