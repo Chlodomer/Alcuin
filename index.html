@@ -203,6 +203,27 @@
             font-style: italic;
         }
 
+        .details-warning {
+            margin: 0.55rem 0 0.7rem;
+            border: 1px solid rgba(171, 179, 188, 0.33);
+            border-left: 3px solid #9aa3ac;
+            border-radius: 8px;
+            background: rgba(21, 24, 27, 0.76);
+            padding: 0.46rem 0.5rem;
+            color: #d7dde3;
+            font-size: 0.74rem;
+            line-height: 1.42;
+        }
+
+        .details-warning-title {
+            display: block;
+            margin-bottom: 0.15rem;
+            color: var(--paper-50);
+            font-size: 0.67rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
         .details-section-title {
             margin: 0.72rem 0 0.4rem;
             color: var(--paper-50);
@@ -320,6 +341,10 @@
         .node-swatch.central { background: var(--accent-500); }
         .node-swatch.recipient { background: #d9dee3; }
         .node-swatch.mentioned { background: #8d96a0; }
+        .node-swatch.editorial {
+            background: transparent;
+            border: 2px dashed #b7c0ca;
+        }
 
         .toggle-row {
             display: flex;
@@ -644,6 +669,7 @@
                 <h2 class="page-subtitle">Interactive map of correspondents, mentions, and intellectual ties (c. 787-804 CE)</h2>
                 <p class="intro-copy">
                     <strong>Hover</strong> nodes to inspect the detailed dossier on the left, <strong>click</strong> to pin a person, and use the right panel for search, paths, and filters.
+                    Dashed-outline nodes are <strong>post-Alcuin editorial/addenda references</strong>, not contemporary correspondents from the letter text itself.
                 </p>
             </div>
             <div class="header-metrics" aria-hidden="true">
@@ -715,6 +741,11 @@
                             <span class="node-icon">◌</span>
                             <span class="node-swatch mentioned"></span>
                             <span>Mentioned Persons</span>
+                        </div>
+                        <div class="node-row">
+                            <span class="node-icon">◍</span>
+                            <span class="node-swatch editorial"></span>
+                            <span>Post-Alcuin Editorial/Addenda</span>
                         </div>
                     </div>
                 </section>
@@ -1432,6 +1463,18 @@
             'Scholarly': '#f2f5f7',
             'Diplomatic': '#d56a32'
         };
+        const POST_ALCUIN_EDITORIAL_NODES = new Set([
+            'Simeon of Durham',
+            'Mabillon',
+            'Usserius',
+            'Canisius',
+            'Joan Franc. Madrisius'
+        ]);
+
+        function isEditorialAddendaNode(name) {
+            const canonicalName = consolidateName(name);
+            return POST_ALCUIN_EDITORIAL_NODES.has(canonicalName);
+        }
 
         let renderMode = 'screen';
         let latestNetworkData = null;
@@ -1456,6 +1499,7 @@
                 name: alcuinDisplayName,
                 properName: 'Alcuin of York',
                 type: 'central',
+                isEditorial: false,
                 citations: [],
                 degree: 0
             });
@@ -1473,10 +1517,12 @@
                         name: recipientDisplay,
                         properName: recipientProper,
                         type: 'recipient',
+                        isEditorial: isEditorialAddendaNode(recipientProper),
                         citations: [],
                         degree: 0
                     });
                 }
+                nodes.get(recipientProper).isEditorial = nodes.get(recipientProper).isEditorial || isEditorialAddendaNode(recipientProper);
                 
                 // Add citation for recipient
                 nodes.get(recipientProper).citations.push({
@@ -1506,10 +1552,12 @@
                                 name: getDisplayName(mentionProper),
                                 properName: mentionProper,
                                 type: 'mentioned',
+                                isEditorial: isEditorialAddendaNode(mentionProper),
                                 citations: [],
                                 degree: 0
                             });
                         }
+                        nodes.get(mentionProper).isEditorial = nodes.get(mentionProper).isEditorial || isEditorialAddendaNode(mentionProper);
                         
                         // Add citation for mentioned person
                         nodes.get(mentionProper).citations.push({
@@ -2005,7 +2053,7 @@
 
             drawer.innerHTML = `
                 <h4 class="evidence-title">${escapeHtml(node.name)}</h4>
-                <p class="evidence-meta">${escapeHtml(node.type)} node · ${node.citations.length} citation(s)</p>
+                <p class="evidence-meta">${escapeHtml(node.type)} node${node.isEditorial ? ' · post-Alcuin editorial/addenda' : ''} · ${node.citations.length} citation(s)</p>
                 <ul class="evidence-list">${citationList}</ul>
             `;
         }
@@ -2083,6 +2131,9 @@
             const biography = getBiography(properName);
             const iconType = getDetailIconType(node);
             const iconMarkup = getDetailIconMarkup(iconType);
+            const provenanceWarning = node.isEditorial
+                ? `<p class="details-warning"><span class="details-warning-title">Editorial/Addenda Node</span>This node is not a contemporary correspondent of Alcuin. It comes from later editorial/addenda material attached to the corpus, not from the core letter text.</p>`
+                : '';
             const citations = (node.citations || []).slice(0, 12);
             const citationList = citations.length === 0
                 ? '<li class="details-item">No citation snippets available.</li>'
@@ -2099,7 +2150,8 @@
                     <span class="details-icon details-icon-${iconType}" aria-hidden="true">${iconMarkup}</span>
                     <h3 class="details-name">${escapeHtml(node.name)}</h3>
                 </div>
-                <p class="details-meta">${escapeHtml(node.type)} node · degree ${node.degree} · ${node.citations.length} citation(s)</p>
+                <p class="details-meta">${escapeHtml(node.type)} node${node.isEditorial ? ' · post-Alcuin editorial/addenda' : ''} · degree ${node.degree} · ${node.citations.length} citation(s)</p>
+                ${provenanceWarning}
                 <p class="details-bio">${escapeHtml(biography.content)}</p>
                 <p class="details-source">${escapeHtml(biography.source)}</p>
                 <h4 class="details-section-title">Letter Evidence</h4>
@@ -2374,6 +2426,7 @@
                 .attr("class", "node")
                 .attr("r", d => getNodeRadius(d, profile))
                 .attr("fill", d => {
+                    if (d.isEditorial) return '#aeb7c1';
                     if (d.type === 'central') return '#d56a32';
                     if (d.type === 'recipient') return '#dfe4ea';
                     return '#8f98a1';
@@ -2381,6 +2434,7 @@
                 .attr("stroke", d => {
                     if (uiState.selectedNodeId === d.id) return '#ea8c5c';
                     if (hasPath && pathNodeIds.has(d.id)) return '#ea8c5c';
+                    if (d.isEditorial) return '#d3dbe2';
                     if (d.type === 'central') return '#fff7f0';
                     if (d.type === 'recipient') return '#7e8791';
                     return '#3d434a';
@@ -2389,7 +2443,8 @@
                     if (uiState.selectedNodeId === d.id) return 3.4;
                     if (hasPath && pathNodeIds.has(d.id)) return 2.8;
                     return d.type === 'central' ? 2.4 : 1.5;
-                });
+                })
+                .attr("stroke-dasharray", d => d.isEditorial ? "3.2,2.2" : "none");
 
             const labelNode = node.filter(d => shouldRenderNodeLabel(d));
             const labelGroup = labelNode.append("g")
@@ -2439,6 +2494,7 @@
                     .attr("stroke", d => {
                         if (uiState.selectedNodeId === d.id) return '#ea8c5c';
                         if (hasPath && pathNodeIds.has(d.id)) return '#ea8c5c';
+                        if (d.isEditorial) return '#d3dbe2';
                         if (d.type === 'central') return '#fff7f0';
                         if (d.type === 'recipient') return '#7e8791';
                         return '#3d434a';
@@ -2447,7 +2503,8 @@
                         if (uiState.selectedNodeId === d.id) return 3.4;
                         if (hasPath && pathNodeIds.has(d.id)) return 2.8;
                         return d.type === 'central' ? 2.4 : 1.5;
-                    });
+                    })
+                    .attr("stroke-dasharray", d => d.isEditorial ? "3.2,2.2" : "none");
             }
 
             node
